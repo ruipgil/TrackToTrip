@@ -1,9 +1,21 @@
+import gpxpy
+from .preprocess import preprocess as preprocess
 import numpy as np
 import matplotlib.pyplot as plt
+
+
+def loadGPX(name):
+    return gpxpy.parse(open(name, 'r'))
+
+def trackFromGPX(name):
+    return preprocess(loadGPX(name))
 
 def plotSegments(segments, annotate=False):
     colors = plt.cm.Spectral(np.linspace(0, 1, len(segments)))
     for s, segment in enumerate(segments):
+        print(segment)
+        print(len(segment))
+
         for i, point in enumerate(segment):
             y = point.getLat()
             x = point.getLon()
