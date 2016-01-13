@@ -7,11 +7,13 @@ setup(name='TrackToTrip',
       author='Rui Gil',
       author_email='ruipgil@gmail.com',
       license='MIT',
-      packages=['TrackToTrip'],
+      packages=['tracktotrip'],
       install_requires=[
           'gpxpy',
           'numpy',
           'pykalman',
           'sklearn'
       ],
+      test_suite='nose.collector',
+      tests_require=['nose'],
       zip_safe=False)
