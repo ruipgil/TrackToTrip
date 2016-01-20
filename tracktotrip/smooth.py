@@ -1,6 +1,7 @@
 from .Point import Point
 import copy
 import numpy as np
+from scipy import stats
 from pykalman import KalmanFilter
 
 def extrapolatePoints(points, N):
@@ -35,7 +36,7 @@ Smooths a track using the Extended Kalman Filter
 def smooth(points, n_iter=5):
     measurements = map(lambda p: p.gen2arr(), points)
     dts = map(lambda p: p.getDt(), points)
-    dt = np.mean(dts)
+    dt = stats.mode(dts).mode[0]
     transition = [
             [1, dt, 0, 0],
             [0, 1, 0, 0],
@@ -59,9 +60,24 @@ def smoothWithExtrapolation(points, N=20, n_iter=2):
     return smooth(extrapolatePoints(points, N) + points, n_iter=n_iter)[N:]
 
 def smoothWithInverse(points, N=100, n_iter=2):
+    N = min(N, len(points)/2)
     partOfPoints = copy.deepcopy(points[:N])
     part = smooth(list(reversed(partOfPoints)))
     total = smooth(points)
     noiseSample = 20
     return list(reversed(part))[:N-noiseSample] + total[(N-noiseSample):]
 
+def smoothSegments(segments, strategy="extrapolate"):
+    result = []
+    E = "extrapolate"
+    I = "inverse"
+    if strategy != E and strategy != I:
+        raise NameError("Invalid startegy, either " + E + " or " + I + ", not " + strategy)
+    for s in segments:
+        temp = None
+        if strategy == E:
+            temp = smoothWithExtrapolation(s)
+        elif strategy == I:
+            temp = smoothWithInverse(s)
+        result.append(temp)
+    return result
