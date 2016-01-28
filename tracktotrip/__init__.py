@@ -3,4 +3,5 @@ from .smooth import *
 from .preprocess import preprocess as preprocess
 from .simplify import simplify
 from .transport import transport
+from .noiseDetection import noiseDetection
 from . import utils
