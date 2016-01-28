@@ -9,9 +9,7 @@ recorded in the current one
 Returns segmented
 """
 def segment(points):
-    epoch = datetime.datetime.utcfromtimestamp(0)
-
-    X = map(lambda p: [p.getLon(), p.getLat(), ((p.getTime() - epoch).total_seconds() * 1000.0)], points)
+    X = map(lambda p: [p.getLon(), p.getLat(), p.getTimestamp()], points)
     X = StandardScaler().fit_transform(X)
     # eps=0.15,min_samples=80
     db = DBSCAN(eps=0.15, min_samples=80).fit(X)

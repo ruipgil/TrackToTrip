@@ -1,4 +1,7 @@
 import math
+import datetime
+
+epoch = datetime.datetime.utcfromtimestamp(0)
 
 class Point:
     def __init__(self, index, lat, lon, time, dt=0, acc=0.0, vel=0.0):
@@ -21,6 +24,8 @@ class Point:
         return self.data[5]
     def getVel(self):
         return self.data[6]
+    def getTimestamp(self):
+        return ((self.getTime() - epoch).total_seconds() * 1000.0)
     def gen2arr(self):
         return [self.data[1], self.data[2]]
     def gen3arr(self):
