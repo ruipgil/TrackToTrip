@@ -52,7 +52,7 @@ def plot(track, dots, noiseSet, average, variance):
 
     return plt
 
-def noiseDetection(track):
+def noiseDetection(track, var=1):
     """
     Method to detect noise in the signal.
 
@@ -88,7 +88,7 @@ def noiseDetection(track):
 
     dotsForStats = map(lambda r: r[1], dotsMapped)
     average = np.median(dotsForStats)
-    variance = np.var(dotsForStats)
+    variance = np.var(dotsForStats) / var
     threshold = average + variance
 
     noise = []
@@ -96,5 +96,6 @@ def noiseDetection(track):
         if d > threshold:
             noise.append(i)
 
+    #plot(track, dots, noise, average, variance).show()
     return noise
 
