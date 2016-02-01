@@ -3,46 +3,66 @@ from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 import math
+from sklearn.preprocessing import normalize
+from scipy import stats
 
-def dotProduct(one, two):
-    return one.getLat()*two.getLat() + one.getLon()*two.getLon()
+def normalizeTrack(track):
+    return normalize(map(lambda p: [p.getLat(), p.getLon()], track))
 
-def dotProductP(one, two):
-    return one*two
+def dot(points):
+    return map(lambda i: np.dot(points[i], points[i+1]), range(len(points)-1))
 
-def dotProductOfArray(track, fn=dotProduct):
-    dots = []
-    for i in range(len(track)-1):
-        point = track[i]
-        nextp = track[i+1]
-        dots.append(fn(point, nextp))
-    return dots
+def distance(arr):
+    last = arr[0]
+    result = []
+    for elm in arr:
+        result.append(abs(elm-last))
+        last = elm
+    return result
 
-def noiseFromSample(sample):
-    return []
+def strategy(sample, av, var):
+    threshold = av+var
+    result = []
+    for i, s in enumerate(sample):
+        if s > threshold:
+            result.append(i)
+    return result
 
 def noiseDetection(track):
+    normalized = normalizeTrack(track)
+    dots = dot(normalized)
+    dots = distance(dots)
+    m = max(dots)
+    dots = map(lambda d: d/m, dots)
+    dotsMapped = list(enumerate(dots))
+    dotsMapped = filter(lambda dot: dot[1]!=0, dotsMapped)
+    dotsForStats = map(lambda r: r[1], dotsMapped)
 
-    dots = dotProductOfArray(track)
+    average = np.median(dotsForStats)
+    variance = np.var(dotsForStats)
 
-    windowSize = 5
+    WINDOW = 10
+    SLIDE = 1
+
     noise = []
-    for i in range(len(dots)-windowSize):
-        sample = dots[i:(i+windowSize)]
-        noise.extend(noiseFromSample(sample))
+    for i in range(len(dotsMapped)-WINDOW):
+        index = i
+        start = index
+        end = index+WINDOW
+        sample = dotsMapped[start:end]
+        noises = strategy4(map(lambda d: d[1], sample), average, variance)
+        for n in noises:
+            noise.append(sample[n][0])
+
+    noise = set(noise)
 
     plt.plot(dots)
+    print(average, variance, average-variance, average+variance)
+    plt.plot([0, len(dots)], [average, average])
+    plt.plot([0, len(dots)], [average-variance, average-variance])
+    plt.plot([0, len(dots)], [average+variance, average+variance])
+    for n in noise:
+        plt.plot(n, dots[n], 'o')
     plt.show()
-
-    """X = [ [v, track[i].getDt()] for i,v in enumerate(dots)]
-    X = StandardScaler().fit_transform(X)
-    db = DBSCAN(eps=0.5, min_samples=30).fit(X)
-    labels = db.labels_
-
-    maxDots = max(dots)
-    colors = plt.cm.Spectral(np.linspace(0, 1, len(set(labels))))
-    for i, label in enumerate(labels):
-        color = 'k' if label == -1 else colors[label]
-        plt.plot(i, dots[i], 'bo-', color=color, markeredgecolor=color)
-    return plt"""
+    return noise
 
