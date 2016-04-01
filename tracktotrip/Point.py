@@ -30,13 +30,44 @@ class Point:
         return [self.data[1], self.data[2]]
     def gen3arr(self):
         return [self.data[1], self.data[2], self.getTime()]
-    def __repr__(self):
-        return self.data.__repr__()
+    # def __repr__(self):
+        # return self.data.__repr__()
     @staticmethod
     def trackToArr2(track):
         return map(mapHelper, track)
     def distance(self, other):
         return distance(self.getLat(), self.getLon(), None, other.getLat(), other.getLon(), None)
+    def timeDifference(self, previous):
+        return abs(self.getTimestamp() - previous.getTimestamp())
+    def computeMetrics(self, previous):
+        dt = self.timeDifference(previous)
+        vel = 0
+        dv = 0
+        acc = 0
+        if dt != 0 :
+            vel = self.distance(previous)/dt
+            dv = vel - previous.getVel()
+            acc = dv/dt
+
+        self.data[5] = acc
+        self.data[6] = vel
+
+        return self
+
+    @staticmethod
+    def fromGPX(gpxTrackPoint, i=0):
+        return Point(i, lat=gpxTrackPoint.latitude, lon=gpxTrackPoint.longitude, time=gpxTrackPoint.time)
+
+    def toJSON(self):
+        return {
+                'lat': self.getLat(),
+                'lon': self.getLon(),
+                'time': self.getTime().isoformat()
+                }
+
+    @staticmethod
+    def fromJSON(json, i=0):
+        return Point(i, lat=json['lat'], lon=json['lon'], time=gt(json['time']))
 
 ONE_DEGREE = 1000. * 10000.8 / 90.
 EARTH_RADIUS = 6371 * 1000
@@ -84,3 +115,10 @@ def mapHelper(p):
         return None
     else:
         p.gen2arr()
+
+def gt(dt_str):
+    dt, _, us= dt_str.partition(".")
+    dt= datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
+    us= int(us.rstrip("Z"), 10)
+    return dt + datetime.timedelta(microseconds=us)
+

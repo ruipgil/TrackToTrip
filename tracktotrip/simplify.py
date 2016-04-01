@@ -25,7 +25,6 @@ def distance_from_line(point, line_point_1, line_point_2):
 
 
 def simplify(points, max_distance, max_time):
-
     if len(points) < 3:
         return points
 

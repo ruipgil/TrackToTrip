@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import normalize
 
-def normalizeTrack(track):
+def normalizeSegments(segment):
     """
     Normalizes track points and returns the result as an array of 2D arrays
     """
-    return normalize(map(lambda p: [p.getLat(), p.getLon()], track))
+    return normalize(map(lambda p: [p.getLat(), p.getLon()], segment))
 
 def normalizeDots(dots):
     """
@@ -52,7 +52,7 @@ def plot(track, dots, noiseSet, average, variance):
 
     return plt
 
-def noiseDetection(track, var=1):
+def noiseDetection(segments, var=1):
     """
     Method to detect noise in the signal.
 
@@ -77,7 +77,7 @@ def noiseDetection(track, var=1):
     This approach doesn't take into consideration time intervals, just time
         sequence.
     """
-    normalized = normalizeTrack(track)
+    normalized = normalizeSegments(segments)
 
     dots = dot(normalized)
     dots = distance(dots)
@@ -99,3 +99,11 @@ def noiseDetection(track, var=1):
     #plot(track, dots, noise, average, variance).show()
     return noise
 
+def removeNoise(segment, var=2):
+    noise = noiseDetection(segment, var=var)
+
+    finalSet = set(range(len(segment))).difference(set(noise))
+    noiselessSegment = []
+    for i in finalSet:
+        noiselessSegment.append(segment[i])
+    return noiselessSegment

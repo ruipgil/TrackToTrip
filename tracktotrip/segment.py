@@ -1,4 +1,9 @@
-import datetime
+from .Point import Point
+from .smooth import smoothSegment
+from .noiseDetection import removeNoise
+from .simplify import simplify
+from .preprocess import preprocessSegment
+
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 
@@ -8,7 +13,7 @@ recorded in the current one
 
 Returns segmented
 """
-def segment(points):
+def segmentSegment(points):
     X = map(lambda p: [p.getLon(), p.getLat(), p.getTimestamp()], points)
     X = StandardScaler().fit_transform(X)
     # eps=0.15,min_samples=80
@@ -39,13 +44,64 @@ def segment(points):
         if l != -1:
             p[l].append(points[i])
 
-    for i, w in enumerate(p):
-        print("Cluster! " + str(i))
-        print(w[0])
-        print(w[-1])
-        #centroid = Point(-1, np.mean(map(lambda p: p.getLon(), w)), np.mean(map(lambda p: p.getLat(), w)), w[-1].getTime())
-        centroid = w[-1]
-        #segments[i].append(centroid)
+    # for i, w in enumerate(p):
+        # print("Cluster! " + str(i))
+        # print(w[0])
+        # print(w[-1])
+        # #centroid = Point(-1, np.mean(map(lambda p: p.getLon(), w)), np.mean(map(lambda p: p.getLat(), w)), w[-1].getTime())
+        # centroid = w[-1]
+        # #segments[i].append(centroid)
 
     print(len(segments))
     return segments
+
+class Segment:
+    def __init__(self, points=[]):
+        self.points = points
+
+    def pointAt(self, i):
+        return self.points[i]
+
+    def removeNoise(self, var=2):
+        print('noise before', len(self.points))
+        self.points = removeNoise(self.points, var=2)
+        print('noise after', len(self.points))
+        return self
+
+    def smooth(self):
+        print('smoothing before', len(self.points))
+        self.points = smoothSegment(self.points)
+        print('smoothing after', len(self.points))
+        return self
+
+    def segment(self):
+        return segmentSegment(self.points)
+
+    def simplify(self):
+        self.points = simplify(self.points, 0.01, 5)
+        return self
+
+    def preprocess(self):
+        points, skipped = preprocessSegment(self.points)
+        self.points = points
+        return self
+
+    def toJSON(self):
+        return map(lambda point: point.toJSON(), self.points)
+
+    def length(self):
+        return self.segments.length
+
+    @staticmethod
+    def fromGPX(gpxSegment):
+        points = []
+        for i, point in enumerate(gpxSegment.points):
+            points.append(Point.fromGPX(point, i))
+        return Segment(points)
+
+    @staticmethod
+    def fromJSON(json):
+        points = []
+        for i, point in enumerate(json['points']):
+            points.append(Point.fromJSON(point, i))
+        return Segment(points)

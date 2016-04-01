@@ -67,6 +67,21 @@ def smoothWithInverse(points, N=100, n_iter=2):
     noiseSample = 20
     return list(reversed(part))[:N-noiseSample] + total[(N-noiseSample):]
 
+def smoothSegment(segment, strategy="extrapolate"):
+    E = "extrapolate"
+    I = "inverse"
+    if strategy == E or strategy == I:
+        temp = None
+        if strategy == E:
+            temp = smoothWithExtrapolation(segment)
+        elif strategy == I:
+            temp = smoothWithInverse(segment)
+        print('smoothing', temp)
+        return temp
+    else:
+        raise NameError("Invalid startegy, either " + E + " or " + I + ", not " + strategy)
+
+
 def smoothSegments(segments, strategy="extrapolate"):
     result = []
     E = "extrapolate"

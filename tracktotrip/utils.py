@@ -1,11 +1,51 @@
 import gpxpy
+import gpxpy.gpx
 from .preprocess import preprocess as preprocess
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime
 
 
 def loadGPX(name):
     return gpxpy.parse(open(name, 'r'))
+
+def loadJson(data):
+    gpx = gpxpy.gpx.GPX()
+
+    gpx_track = gpxpy.gpx.GPXTrack()
+    gpx.tracks.append(gpx_track)
+
+    gpx_segment = gpxpy.gpx.GPXTrackSegment()
+    gpx_track.segments.append(gpx_segment)
+
+    for point in data:
+        gpx_segment.points.append(gpxpy.gpx.GPXTrackPoint(point['lat'], point['lon'], time=gt(point['time'])))
+
+    return gpx
+
+def gt(dt_str):
+    dt, _, us= dt_str.partition(".")
+    dt= datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
+    us= int(us.rstrip("Z"), 10)
+    return dt + datetime.timedelta(microseconds=us)
+
+def trackToJson(segments):
+    track = []
+    print('segments', len(segments))
+    for segment in segments:
+        print('segment', len(segment))
+        s = []
+        for point in segment:
+            s.append({
+                'lat': point.getLat(),
+                'lon': point.getLon(),
+                'time': point.getTime().isoformat()
+                })
+        track.append(s)
+    return track
+
+def trackFromJson(data):
+    return preprocess(loadJson(data))
 
 def trackFromGPX(name):
     return preprocess(loadGPX(name))
