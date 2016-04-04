@@ -3,6 +3,7 @@ from .smooth import smoothSegment
 from .noiseDetection import removeNoise
 from .simplify import simplify
 from .preprocess import preprocessSegment
+from .Location import inferLocation
 
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
@@ -52,7 +53,7 @@ def segmentSegment(points):
         # centroid = w[-1]
         # #segments[i].append(centroid)
 
-    print(len(segments))
+    # print(len(segments))
     return segments
 
 class Segment:
@@ -63,15 +64,11 @@ class Segment:
         return self.points[i]
 
     def removeNoise(self, var=2):
-        print('noise before', len(self.points))
         self.points = removeNoise(self.points, var=2)
-        print('noise after', len(self.points))
         return self
 
     def smooth(self):
-        print('smoothing before', len(self.points))
         self.points = smoothSegment(self.points)
-        print('smoothing after', len(self.points))
         return self
 
     def segment(self):
@@ -85,6 +82,9 @@ class Segment:
         points, skipped = preprocessSegment(self.points)
         self.points = points
         return self
+
+    def inferLocation(self):
+        return inferLocation(self.points)
 
     def toJSON(self):
         return map(lambda point: point.toJSON(), self.points)

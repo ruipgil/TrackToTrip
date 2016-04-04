@@ -67,7 +67,7 @@ def smoothWithInverse(points, N=100, n_iter=2):
     noiseSample = 20
     return list(reversed(part))[:N-noiseSample] + total[(N-noiseSample):]
 
-def smoothSegment(segment, strategy="extrapolate"):
+def smoothSegment(segment, strategy="inverse"):
     E = "extrapolate"
     I = "inverse"
     if strategy == E or strategy == I:

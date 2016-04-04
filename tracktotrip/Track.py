@@ -9,6 +9,7 @@ class Track:
     def __init__(self, name="", segments=[]):
         self.name = name
         self.segments = segments
+        self.locations = []
 
     def segmentAt(self, i):
         return self.segments[i]
@@ -64,10 +65,15 @@ class Track:
         self.segments = map(lambda segment: segment.preprocess(), self.segments)
         return self
 
+    def inferLocation(self):
+        self.locations = map(lambda segment: segment.inferLocation(), self.segments)
+        return self
+
     def toJSON(self):
         return {
                 'name': self.name,
-                'segments': map(lambda segment: segment.toJSON(), self.segments)
+                'segments': map(lambda segment: segment.toJSON(), self.segments),
+                'locations': map(lambda location: [location[0].toJSON(), location[1].toJSON()], self.locations)
                 }
 
     def toGPX():
