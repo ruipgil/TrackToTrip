@@ -7,7 +7,8 @@ def matchLocation(position):
             'location': loc
             })
     print(LOCATION_KB, distances)
-    distances = filter(lambda d: d['distance'] >= LOC_THRESHOLD, distances)
+    distances = filter(lambda d: d['distance'] <= LOC_THRESHOLD, distances)
+    distances = sorted(distances, key=lambda d: d['distance'])
 
     print(distances)
     if len(distances) > 0:
@@ -24,17 +25,13 @@ def inferLocation(segment):
     return matchLocation(start), matchLocation(end)
 
 
-# 5 meters is the threshold
-LOC_THRESHOLD = 100
+# 5 meters is the threshold to associate distances
+LOC_THRESHOLD = 5
 
 class Location:
     def __init__(self, label, position):
         self.label = label
         self.centroid = position
-    def match(self, position):
-        distance = self.centroid.distance(position)
-        print(distance)
-        return distance <= LOC_THRESHOLD
     def distance(self, position):
         return self.centroid.distance(position)
 
