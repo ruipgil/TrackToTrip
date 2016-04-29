@@ -6,6 +6,7 @@ epoch = datetime.datetime.utcfromtimestamp(0)
 class Point:
     def __init__(self, index, lat, lon, time, dt=0, acc=0.0, vel=0.0):
         self.data = [index, lon, lat, time, dt, acc, vel]
+        self.transportationMode = None
     def getId(self):
         return self.data[0]
     def getLat(self):
@@ -24,8 +25,11 @@ class Point:
         return self.data[5]
     def getVel(self):
         return self.data[6]
+
     def getTimestamp(self):
-        return ((self.getTime() - epoch).total_seconds() * 1000.0)
+        """ Gets the timestamp of this point, seconds since 1970
+        """
+        return (self.getTime() - epoch).total_seconds()
     def gen2arr(self):
         return [self.data[1], self.data[2]]
     def gen3arr(self):
@@ -62,7 +66,8 @@ class Point:
         return {
                 'lat': self.getLat(),
                 'lon': self.getLon(),
-                'time': self.getTime().isoformat()
+                'time': self.getTime().isoformat(),
+                'vel': self.getVel()
                 }
 
     @staticmethod

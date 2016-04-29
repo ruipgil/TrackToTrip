@@ -4,6 +4,7 @@ from .noiseDetection import removeNoise
 from .simplify import simplify
 from .preprocess import preprocessSegment
 from .Location import inferLocation
+from .transportationMode import inferTransportationMode
 
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
@@ -36,6 +37,12 @@ def segmentSegment(points):
         else:
             clusters[label + 1].append(point)
 
+    for si, segment in enumerate(segments):
+        if (len(segments) - 1) > si:
+            print(len(segments), si)
+            print(segments[si + 1][0].toJSON())
+            #segment.append(segments[si + 1][0])
+
     """print(map(lambda s: len(s), segments))
     for s in segments:
         print(str(s[0]) + str(s[-1]))"""
@@ -59,6 +66,7 @@ def segmentSegment(points):
 class Segment:
     def __init__(self, points=[]):
         self.points = points
+        self.transportationModes = []
 
     def pointAt(self, i):
         return self.points[i]
@@ -86,8 +94,16 @@ class Segment:
     def inferLocation(self):
         return inferLocation(self.points)
 
+    def inferTransportationMode(self):
+        self.transportationModes = inferTransportationMode(self.points)
+        return self
+
     def toJSON(self):
-        return map(lambda point: point.toJSON(), self.points)
+        print(self.transportationModes)
+        return {
+                'points': map(lambda point: point.toJSON(), self.points),
+                'transportationModes': self.transportationModes
+                }
 
     def length(self):
         return self.segments.length

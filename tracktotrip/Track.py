@@ -1,6 +1,6 @@
 import gpxpy
 from os.path import basename
-
+import matplotlib.pyplot as plt
 from .segment import Segment
 
 DEFAULT_FILE_NAME_FORMAT = "%Y-%m-%d"
@@ -44,6 +44,11 @@ class Track:
             segment.simplify()
         return self
 
+    def inferTransportationMode(self):
+        for segment in self.segments:
+            segment.inferTransportationMode()
+        return self
+
     def copy(self):
         return self
 
@@ -56,13 +61,20 @@ class Track:
         self.removeNoise(2)
         self.smooth()
         self.segment()
-        self.simplify()
+        for segment in self.segments:
+            plt.plot(map(lambda p: p.getVel(), segment.points))
+        plt.savefig("a.png", dpi=200, format='png', transparent=True, figsize=(10, 10))
+        # self.simplify()
         self.name = name
 
         return self
 
     def preprocess(self):
         self.segments = map(lambda segment: segment.preprocess(), self.segments)
+        return self
+
+    def inferTransportationModes(self):
+        self.segments = map(lambda segment: segment.inferTransportationMode(), self.segments)
         return self
 
     def inferLocation(self):
@@ -101,5 +113,5 @@ class Track:
     @staticmethod
     def fromJSON(json):
         segments = map(lambda s: Segment.fromJSON(s), json['segments'])
-        return Track(json['name'], segments)
+        return Track(json['name'], segments).preprocess()
 
