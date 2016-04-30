@@ -4,46 +4,109 @@ import datetime
 epoch = datetime.datetime.utcfromtimestamp(0)
 
 class Point:
+    """Point position representation
+
+    Attributes:
+        index: original index of point in segment
+        lat: number, latitude
+        lon: number, longitude
+        time: datetime instance
+        dt: time difference in seconds from the past point in the segment
+            should be computed
+        acc: float, accelaration in km^2/h, relative to the previous point in the segment
+            should be computed with computeMetrics method
+        vel: float, velocity in km/h, relative to the previous point in the segment
+            should be computed with computeMetrics method
+    """
     def __init__(self, index, lat, lon, time, dt=0, acc=0.0, vel=0.0):
-        self.data = [index, lon, lat, time, dt, acc, vel]
-        self.transportationMode = None
+        self.index = index
+        self.lon = lon
+        self.lat = lat
+        self.time = time
+        self.dt = dt
+        self.acc = acc
+        self.vel = vel
+
     def getId(self):
-        return self.data[0]
+        return self.index
     def getLat(self):
-        return self.data[2]
+        return self.lat
     def setLat(self, lat):
-        self.data[2] = lat
+        self.lat = lat
     def getLon(self):
-        return self.data[1]
+        return self.lon
     def setLon(self, lon):
-        self.data[1] = lon
+        self.lon = lon
     def getTime(self):
-        return self.data[3]
+        return self.time
     def getDt(self):
-        return self.data[4]
+        return self.dt
     def getAcc(self):
-        return self.data[5]
+        return self.acc
     def getVel(self):
-        return self.data[6]
+        return self.vel
 
     def getTimestamp(self):
-        """ Gets the timestamp of this point, seconds since 1970
+        """Gets the timestamp of this point's time,
+        seconds since 1970
+
+        Returns:
+            Float
         """
         return (self.getTime() - epoch).total_seconds()
+
     def gen2arr(self):
-        return [self.data[1], self.data[2]]
+        """Generate a location array
+
+        Returns:
+            Array with latitude and longitude
+        """
+        return [self.lat, self.lon]
+
     def gen3arr(self):
-        return [self.data[1], self.data[2], self.getTime()]
-    # def __repr__(self):
-        # return self.data.__repr__()
+        """Generate a time-location array
+
+        Returns:
+            Array with latitude, longitude and datetime instance
+        """
+        return [self.lat, self.lon, self.getTime()]
+
     @staticmethod
     def trackToArr2(track):
         return map(mapHelper, track)
+
     def distance(self, other):
+        """Distance between this and another Point
+
+        Args:
+            other: Point instance
+        Returns:
+            Distance, float, between the two points in km
+        """
         return distance(self.getLat(), self.getLon(), None, other.getLat(), other.getLon(), None)
+
     def timeDifference(self, previous):
+        """Calculates the time difference between two points
+
+        Args:
+            previous: Point instance
+        Returns:
+            Time difference, float, between the two points in seconds.
+            May be positive if the other point occured before, negative
+            otherwise.
+        """
         return abs(self.getTimestamp() - previous.getTimestamp())
+
     def computeMetrics(self, previous):
+        """Computes the metrics of this point
+
+        Computes and updates the dt, vel and acc class attributes.
+
+        Args:
+            previous: Point instance, that occured before
+        Returns:
+            This Point instance
+        """
         dt = self.timeDifference(previous)
         vel = 0
         dv = 0
@@ -53,25 +116,43 @@ class Point:
             dv = vel - previous.getVel()
             acc = dv/dt
 
-        self.data[5] = acc
-        self.data[6] = vel
-
+        self.dt = dt
+        self.acc = acc
+        self.vel = vel
         return self
 
     @staticmethod
     def fromGPX(gpxTrackPoint, i=0):
+        """Creates a Point from GPX representation
+
+        Arguments:
+            gpxTrackPoint: gpxpy.GPXTrackPoint instance
+        Returns:
+            Point instance
+        """
         return Point(i, lat=gpxTrackPoint.latitude, lon=gpxTrackPoint.longitude, time=gpxTrackPoint.time)
 
     def toJSON(self):
+        """Creates a JSON serializable representation of this Point
+
+        Returns:
+            Map with keys: lat, lon (both floats) and time (string, in ISO format)
+        """
         return {
-                'lat': self.getLat(),
-                'lon': self.getLon(),
-                'time': self.getTime().isoformat(),
-                'vel': self.getVel()
+                'lat': self.lat,
+                'lon': self.lon,
+                'time': self.time.isoformat()
                 }
 
     @staticmethod
     def fromJSON(json, i=0):
+        """Creates Point instance from JSON representation
+
+        Args:
+            json: map representation of Point instance
+        Returns:
+            Point instance
+        """
         return Point(i, lat=json['lat'], lon=json['lon'], time=gt(json['time']))
 
 ONE_DEGREE = 1000. * 10000.8 / 90.
