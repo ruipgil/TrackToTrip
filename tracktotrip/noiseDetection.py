@@ -6,7 +6,7 @@ def normalizeSegments(segment):
     """
     Normalizes track points and returns the result as an array of 2D arrays
     """
-    return normalize(map(lambda p: [p.getLat(), p.getLon()], segment))
+    return normalize(map(lambda p: [p.lat, p.lon], segment))
 
 def normalizeDots(dots):
     """
@@ -41,7 +41,7 @@ def plot(track, dots, noiseSet, average, variance):
 
     Returns the matplotlib plot
     """
-    print(average, variance, average-variance, average+variance)
+    # print(average, variance, average-variance, average+variance)
 
     plt.plot(dots)
     plt.plot([0, len(dots)], [average, average])

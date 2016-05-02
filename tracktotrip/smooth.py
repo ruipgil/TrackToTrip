@@ -11,18 +11,18 @@ def extrapolatePoints(points, N):
     last = None
     for point in points:
         if last!=None:
-            lat.append(last.getLat()-point.getLat())
-            lon.append(last.getLon()-point.getLon())
+            lat.append(last.lat-point.lat)
+            lon.append(last.lon-point.lon)
         last = point
 
-    dts = np.mean(map(lambda p: p.getDt(), points))
+    dts = np.mean(map(lambda p: p.dt, points))
     lons = np.mean(lon)
     lats = np.mean(lat)
 
     genSample = []
     last = points[0]
     for i in range(N):
-        p = Point(i*(-1), last.getLat()+lats, last.getLon()+lons, last.getTime(), dts)
+        p = Point(i*(-1), last.lat+lats, last.lon+lons, last.time, dts)
         genSample.append(p)
         last = p
 
@@ -35,7 +35,7 @@ Smooths a track using the Extended Kalman Filter
 """
 def smooth(points, n_iter=5):
     measurements = map(lambda p: p.gen2arr(), points)
-    dts = map(lambda p: p.getDt(), points)
+    dts = map(lambda p: p.dt, points)
     dt = stats.mode(dts).mode[0]
     transition = [
             [1, dt, 0, 0],
@@ -51,8 +51,8 @@ def smooth(points, n_iter=5):
     (smoothed_state_means, smoothed_state_covariances) = kf.smooth(measurements)
 
     for pi, point in enumerate(points):
-        point.setLon(smoothed_state_means[pi][0])
-        point.setLat(smoothed_state_means[pi][2])
+        point.lon = smoothed_state_means[pi][0]
+        point.lat = smoothed_state_means[pi][2]
 
     return points
 
@@ -76,7 +76,7 @@ def smoothSegment(segment, strategy="inverse"):
             temp = smoothWithExtrapolation(segment)
         elif strategy == I:
             temp = smoothWithInverse(segment)
-        print('smoothing', temp)
+        # print('smoothing', temp)
         return temp
     else:
         raise NameError("Invalid startegy, either " + E + " or " + I + ", not " + strategy)

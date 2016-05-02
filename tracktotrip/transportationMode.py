@@ -31,7 +31,7 @@ def naiveTransportationInferring(points, S = 0.1, W = 7):
 
     tmodes = []
     for point in points:
-        vel = point.getVel()
+        vel = point.vel
         if 0 <= vel and vel < S:
             tmodes.append('Stop')
         elif S <= vel and vel < W:

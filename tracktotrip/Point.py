@@ -27,25 +27,6 @@ class Point:
         self.acc = acc
         self.vel = vel
 
-    def getId(self):
-        return self.index
-    def getLat(self):
-        return self.lat
-    def setLat(self, lat):
-        self.lat = lat
-    def getLon(self):
-        return self.lon
-    def setLon(self, lon):
-        self.lon = lon
-    def getTime(self):
-        return self.time
-    def getDt(self):
-        return self.dt
-    def getAcc(self):
-        return self.acc
-    def getVel(self):
-        return self.vel
-
     def getTimestamp(self):
         """Gets the timestamp of this point's time,
         seconds since 1970
@@ -53,23 +34,23 @@ class Point:
         Returns:
             Float
         """
-        return (self.getTime() - epoch).total_seconds()
+        return (self.time - epoch).total_seconds()
 
     def gen2arr(self):
         """Generate a location array
 
         Returns:
-            Array with latitude and longitude
+            Array with longitude and latitude
         """
-        return [self.lat, self.lon]
+        return [self.lon, self.lat]
 
     def gen3arr(self):
         """Generate a time-location array
 
         Returns:
-            Array with latitude, longitude and datetime instance
+            Array with longitude, latitude and datetime instance
         """
-        return [self.lat, self.lon, self.getTime()]
+        return [self.lon, self.lat, self.getTimestamp()]
 
     @staticmethod
     def trackToArr2(track):
@@ -83,7 +64,7 @@ class Point:
         Returns:
             Distance, float, between the two points in km
         """
-        return distance(self.getLat(), self.getLon(), None, other.getLat(), other.getLon(), None)
+        return distance(self.lat, self.lon, None, other.lat, other.lon, None)
 
     def timeDifference(self, previous):
         """Calculates the time difference between two points
@@ -113,7 +94,7 @@ class Point:
         acc = 0
         if dt != 0 :
             vel = self.distance(previous)/dt
-            dv = vel - previous.getVel()
+            dv = vel - previous.vel
             acc = dv/dt
 
         self.dt = dt

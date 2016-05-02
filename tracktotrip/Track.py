@@ -2,6 +2,7 @@ import gpxpy
 from os.path import basename
 import matplotlib.pyplot as plt
 from .segment import Segment
+from copy import deepcopy
 
 DEFAULT_FILE_NAME_FORMAT = "%Y-%m-%d"
 
@@ -16,6 +17,7 @@ class Track:
     Attributes:
         name: A string indicating the name of the track
         segments: Array of TrackToTrip Segments
+        preprocessed: Boolean, true if it has been preprocessed
     """
 
     def __init__(self, name="", segments=[]):
@@ -33,7 +35,7 @@ class Track:
         """
         self.name = name
         self.segments = segments
-        self.locations = []
+        self.preprocessed = False
 
     def segmentAt(self, i):
         """Segment at index
@@ -56,7 +58,7 @@ class Track:
             A string of the generated name
         """
         if len(self.segments) > 0:
-            return self.segmentAt(0).pointAt(0).getTime().strftime(DEFAULT_FILE_NAME_FORMAT) + ".gpx"
+            return self.segmentAt(0).pointAt(0).time.strftime(DEFAULT_FILE_NAME_FORMAT) + ".gpx"
         else:
             return "EmptyTrack"
 
@@ -127,8 +129,8 @@ class Track:
         Returns:
             A Track object different from this instance
         """
-        # TODO
-        return self
+
+        return deepcopy(self)
 
     def toTrip(self, name=""):
         """In-place, transformation of a track into a trip
@@ -160,9 +162,9 @@ class Track:
         self.removeNoise(2)
         self.smooth()
         self.segment()
-        for segment in self.segments:
-            plt.plot(map(lambda p: p.getVel(), segment.points))
-        plt.savefig("a.png", dpi=200, format='png', transparent=True, figsize=(10, 10))
+        # for segment in self.segments:
+            # plt.plot(map(lambda p: p.vel, segment.points))
+        # plt.savefig("a.png", dpi=200, format='png', transparent=True, figsize=(10, 10))
         # self.simplify()
         self.name = name
 
@@ -175,6 +177,7 @@ class Track:
             This track
         """
         self.segments = map(lambda segment: segment.preprocess(), self.segments)
+        self.preprocessed = True
         return self
 
     def inferTransportationModes(self):
@@ -192,7 +195,7 @@ class Track:
         Returns:
             This track
         """
-        self.locations = map(lambda segment: segment.inferLocation(), self.segments)
+        self.segments = map(lambda segment: segment.inferLocation(), self.segments)
         return self
 
     def toJSON(self):
@@ -203,8 +206,7 @@ class Track:
         """
         return {
                 'name': self.name,
-                'segments': map(lambda segment: segment.toJSON(), self.segments),
-                'locations': map(lambda location: [location[0].toJSON(), location[1].toJSON()], self.locations)
+                'segments': map(lambda segment: segment.toJSON(), self.segments)
                 }
 
     def toGPX():

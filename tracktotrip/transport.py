@@ -12,8 +12,8 @@ def calculateVelocity(dest, orig, d=True):
         dd = math.sqrt((dest['lat']-orig['lat'])**2 + (dest['lon'] - orig['lon'])**2)
         dt = (t(dest['time']) - t(orig['time'])).total_seconds()
     else:
-        dd = math.sqrt((dest.getLat()-orig.getLat())**2 + (dest.getLon() - orig.getLon())**2)
-        dt = (dest.getTime() - orig.getTime()).total_seconds()
+        dd = math.sqrt((dest.lat-orig.lat)**2 + (dest.lon - orig.lon)**2)
+        dt = (dest.time - orig.time).total_seconds()
     if dt == 0:
         return 0
 
@@ -48,10 +48,10 @@ def buildFeaturesForTrack(track, d=True):
 
 def transport(track):
     if isfile("features.json"):
-        print("loading features")
+        # print("loading features")
         [X, Y] = json.loads(open("features.json","r").read())
     else:
-        print("building features")
+        # print("building features")
         X, Y = buildTrainSet()
         saveToFile("features.json", [X, Y])
 
@@ -59,9 +59,9 @@ def transport(track):
     clf = clf.fit(X,Y)
 
     in_track = buildFeaturesForTrack(track, d=False)
-    print(in_track)
+    # print(in_track)
     result = clf.predict_proba(in_track)
-    print(result)
+    # print(result)
     return result
 
 def saveToFile(name, obj):

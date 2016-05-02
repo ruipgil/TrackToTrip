@@ -16,7 +16,7 @@ def segmentSegment(points):
 
     Returns segmented
     """
-    X = map(lambda p: [p.getLon(), p.getLat(), p.getTimestamp()], points)
+    X = map(lambda p: p.gen3arr(), points)
     X = StandardScaler().fit_transform(X)
     # eps=0.15,min_samples=80
     db = DBSCAN(eps=0.15, min_samples=80).fit(X)
@@ -37,11 +37,11 @@ def segmentSegment(points):
         else:
             clusters[label + 1].append(point)
 
-    for si, segment in enumerate(segments):
-        if (len(segments) - 1) > si:
-            print(len(segments), si)
-            print(segments[si + 1][0].toJSON())
-            #segment.append(segments[si + 1][0])
+    # for si, segment in enumerate(segments):
+        # if (len(segments) - 1) > si:
+            # print(len(segments), si)
+            # print(segments[si + 1][0].toJSON())
+            # #segment.append(segments[si + 1][0])
 
     """print(map(lambda s: len(s), segments))
     for s in segments:
@@ -163,8 +163,12 @@ class Segment:
         Returns:
             This segment
         """
-        # FIXME
-        return inferLocation(self.points)
+
+        locations = inferLocation(self.points)
+        self.locationFrom = locations[0]
+        self.locationTo = locations[1]
+
+        return self
 
     def inferTransportationMode(self):
         """In-place transportation mode inferring
