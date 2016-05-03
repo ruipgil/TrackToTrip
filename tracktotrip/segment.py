@@ -99,6 +99,41 @@ class Segment:
         """
         return self.points[i]
 
+    def getStartTime(self):
+        return self.points[0].time
+
+    def getEndTime(self):
+        return self.points[-1].time
+
+    def getBounds(self, lowerIndex = 0, upperIndex = -1):
+        """Computes the bounds of the segment, or part of it
+
+        Args:
+            lowerIndex: Optional, start index. Default is 0
+            upperIndex: Optional, end index. Default is -1,
+                the last point
+        Returns:
+            Array with two arrays. The first one with the
+            minimum latitude and longitude, the second with
+            the maximum latitude and longitude of the segment
+            slice
+        """
+        pointSet = self.point[lowerIndex, upperIndex]
+
+        minLat = 0
+        minLon = 0
+        maxLat = 0
+        maxLon = 0
+
+        for point in pointSet:
+            minLat = min(minLat, point.lat)
+            minLon = min(minLon, point.lon)
+            maxLat = min(maxLat, point.lat)
+            maxLon = min(maxLon, point.lon)
+
+        return [[minLat, minLon], [maxLat, maxLon]]
+
+
     def removeNoise(self, var=2):
         """In-place removal of noise points
 
