@@ -209,11 +209,39 @@ class Track:
                 'segments': map(lambda segment: segment.toJSON(), self.segments)
                 }
 
-    def toGPX():
+    def toGPX(self):
         """Converts track to a GPX format
+
+        Uses GPXPY library as an intermediate format
+
+        Returns:
+            A string with the GPX/XML track
         """
-        # TODO
-        print("toImplement")
+        gpx = gpxpy.gpx.GPX()
+        gpx_track = gpxpy.gpx.GPXTrack()
+        gpx.tracks.append(gpx_track)
+
+        for segment in self.segments:
+            gpx_segment = gpxpy.gpx.GPXTrackSegment()
+            gpx_track.segments.append(gpx_segment)
+
+            for point in segment.points:
+                gpx_segment.points.append(gpxpy.gpx.GPXTrackPoint(point.lat, point.lon, time=point.time))
+        return gpx.to_xml()
+
+    def toLIFE(self):
+        """Converts track to LIFE format
+        """
+        # TODO use LIFE own types
+
+        # spans = []
+        # D_SPAN_FORMAT = "%H%M"
+        # for segment in self.segments:
+            # span_time = "%s%s" % (segment.getStartTime().strftime(D_SPAN_FORMAT), segment.getEndTime().strftime(D_SPAN_FORMAT))
+            # buf = "%s: %s" % (span_time, segment.locationFrom.label)
+            # if segment.locationTo != None:
+                # buf = "%s "
+        return ""
 
     @staticmethod
     def fromGPX(filePath):
