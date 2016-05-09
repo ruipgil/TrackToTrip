@@ -74,8 +74,10 @@ class Segment:
                 label: string with the type of transportation mode
                 from: start of the span
                 to: end of the span
-        locationFrom: string with the semantic location of the start of the segment
-        locationTo: string with the semantic location of the end of the segment
+        locationFrom: TrackToTrip.Location or None, the semantic location of
+            the start of the segment
+        locationTo: TrackToTrip.Location or None, the semantic location of
+            the end of the segment
     """
 
     def __init__(self, points=[]):
@@ -86,8 +88,8 @@ class Segment:
         """
         self.points = points
         self.transportationModes = []
-        self.locationFrom = ""
-        self.locationTo = ""
+        self.locationFrom = None
+        self.locationTo = None
 
     def pointAt(self, i):
         """Point at index
@@ -226,8 +228,8 @@ class Segment:
         return {
                 'points': map(lambda point: point.toJSON(), self.points),
                 'transportationModes': self.transportationModes,
-                'locationFrom': self.locationFrom,
-                'locationTo': self.locationTo
+                'locationFrom': self.locationFrom.toJSON() if self.locationFrom != None else None,
+                'locationTo': self.locationTo.toJSON() if self.locationTo != None else None
                 }
 
     def length(self):
