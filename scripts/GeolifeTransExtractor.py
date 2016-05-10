@@ -2,6 +2,8 @@ import sys
 import gpxpy
 import gpxpy.gpx
 import datetime
+import argparse
+import urllib2, zipfile, StringIO
 from os.path import join
 from os import listdir
 
@@ -74,31 +76,87 @@ def saveSegments(segments, f, folder):
 
         saveFile(folder, filename, gpx.to_xml())
 
-def processFolderGroup(folder):
+def processFolderGroup(folder, output):
     # format: { walk: [ (start-time, end-time), ... ], ... }
-    labels = readLabels(folder)
-    trajFolder = join(folder, 'Trajectory')
-    fileList = filter(lambda f: f.split('.')[-1] == 'plt', listdir(trajFolder))
-    for f in fileList:
-        # format: [( label, segment ), ...]
-        #       segment is : [ (lat, lon, time), ... ]
-        segments = extractSegmentsFromFile(join(trajFolder, f), labels)
-        if len(segments) > 0:
-            saveSegments(segments, f, trajFolder)
+    try:
+        labels = readLabels(folder)
 
-def processDataset(root = 'Data'):
+        trajFolder = join(folder, 'Trajectory')
+        fileList = filter(lambda f: f.split('.')[-1] == 'plt', listdir(trajFolder))
+
+        l = len(fileList)
+        for i, f in enumerate(fileList):
+
+            sys.stdout.write('Processing %d of %d: %s\r' % (i + 1, l, f))
+            sys.stdout.flush()
+            # format: [( label, segment ), ...]
+            #       segment is : [ (lat, lon, time), ... ]
+            segments = extractSegmentsFromFile(join(trajFolder, f), labels)
+            if len(segments) > 0:
+                saveSegments(segments, f, output)
+
+        sys.stdout.write('Processed\n')
+        sys.stdout.flush()
+    except IOError:
+        print('Skipping')
+        return
+    except KeyboardInterrupt:
+        exit()
+    except:
+        print(sys.exc_info()[0])
+
+def processDataset(root = 'Data', output = 'out'):
     folders = listdir(root)
     for folder in folders:
         f = join(root, folder)
         print('Going to ' + f)
-        processFolderGroup(f)
+        processFolderGroup(f, output)
     print('Done')
 
-if len(sys.argv) >= 2:
-    isHelp = filter(lambda e: e=='--h' or e=='-h' or e=='-help' or e=='--help', sys.argv)
-    if len(isHelp)>0:
-        print('GeoLife Trajectory dataset transportation mode extractor.\n\nExtracts transportation mode from the dataset, into individual files,\nannotated with the following format:\n\t[transporation mode].[control].[nPoints].[original-file].gpx\n\nUsage:\n\t' + sys.argv[0] + ' [folderToDataset]')
-    else:
-        processDataset(sys.argv[0])
+lastTime = None
+def chunk_report(bytes_so_far, chunk_size, total_size):
+   percent = float(bytes_so_far) / total_size
+   percent = round(percent*100, 2)
+   mb = 1024 * 1024
+   sys.stdout.write("Downloaded %d of %dMB (%0.2f%%)\r" %
+       (bytes_so_far / mb, total_size / mb, percent))
+
+   if bytes_so_far >= total_size:
+      sys.stdout.write('\n')
+
+def chunk_read(response, chunk_size=8192, report_hook=None):
+   total_size = response.info().getheader('Content-Length').strip()
+   total_size = int(total_size)
+   bytes_so_far = 0
+
+   while 1:
+      chunk = response.read(chunk_size)
+      bytes_so_far += len(chunk)
+
+      if not chunk:
+         break
+
+      if report_hook:
+         report_hook(bytes_so_far, chunk_size, total_size)
+
+   return bytes_so_far
+
+def downloadDataset(toFolder):
+    print('Dowloading GeoLife dataset from http://research.microsoft.com/en-us/downloads/b16d359d-d164-469e-9fd4-daa38f2b2e13/')
+    print('This might take a few minutes, the file size is approximately 300MB')
+    r = urllib2.urlopen('http://ftp.research.microsoft.com/downloads/b16d359d-d164-469e-9fd4-daa38f2b2e13/Geolife%20Trajectories%201.3.zip')
+    chunk_read(r, report_hook=chunk_report)
+    z = zipfile.ZipFile(StringIO.StringIO(r))
+    z.extractall(toFolder)
+
+parser = argparse.ArgumentParser(description='GeoLife Trajectory dataset transportation mode extractor.\n\nExtracts transportation mode from the dataset, into individual files,\nannotated with the following format:\n\t[transporation mode].[control].[nPoints].[original-file].gpx')
+parser.add_argument('datasetFolder', metavar='datasetFolder', type=str, help='Path to the GeoLife dataset folder')
+parser.add_argument('-o', '--output', metavar='outputFolder', type=str, help='Path to processed dataset')
+parser.add_argument('-d', '--download', dest='download', action='store_true', required=False, help='Pass this flag to download the GeoLife dataset to the specified folder and to process it')
+args = parser.parse_args()
+
+print(args)
+if args.download == True:
+    downloadDataset(args.datasetFolder)
 else:
-    processDataset()
+    processDataset(args.datasetFolder, args.output)
