@@ -170,13 +170,16 @@ class Track:
 
         return self
 
-    def preprocess(self):
+    def preprocess(self, destructive=True):
         """In-place preprocessing of segments
 
+        Args:
+            destructive: Optional, boolean. True to allow point
+                removal. More details in preprocessSegment
         Returns:
             This track
         """
-        self.segments = map(lambda segment: segment.preprocess(), self.segments)
+        self.segments = map(lambda segment: segment.preprocess(destructive), self.segments)
         self.preprocessed = True
         return self
 

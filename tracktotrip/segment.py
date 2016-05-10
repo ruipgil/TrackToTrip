@@ -180,15 +180,18 @@ class Segment:
         self.points = simplify(self.points, 0.01, 5)
         return self
 
-    def preprocess(self):
+    def preprocess(self, destructive=True):
         """In-place segment preprocessing
 
         Applies preprocessSegment function to points
 
+        Args:
+            destructive: Optional, boolean. True to allow point
+                removal. More details in preprocessSegment
         Returns:
             This segment
         """
-        points, skipped = preprocessSegment(self.points)
+        points, skipped = preprocessSegment(self.points, destructive=destructive)
         self.points = points
         return self
 

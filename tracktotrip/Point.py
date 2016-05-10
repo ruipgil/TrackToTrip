@@ -136,6 +136,11 @@ class Point:
         """
         return Point(i, lat=json['lat'], lon=json['lon'], time=gt(json['time']))
 
+    @staticmethod
+    def accessor(point):
+        return point.lat, point.lon, point.time
+
+
 ONE_DEGREE = 1000. * 10000.8 / 90.
 EARTH_RADIUS = 6371 * 1000
 
