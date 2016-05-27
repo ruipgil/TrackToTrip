@@ -75,6 +75,7 @@ def plotSoftClassifier(clf, step, N=100):
             v, clf.predict_proba([[v]])
             ])
     plt.plot(map(lambda a: a[0], res), map(lambda a: a[1][0][1], res))
+    return plt
 
 stop, stopdt = buildSoftClassifier([{ 'val': 0, 'prob': 1 }, { 'val': 1, 'prob': 0.9 }, { 'val': 5, 'prob': 0.18 }, { 'val': 6.5, 'prob': 0 }])
 walk, walkdt = buildSoftClassifier([{ 'val': 0, 'prob': 0 }, { 'val': 2, 'prob': 0.1 }, { 'val': 5, 'prob': 0.8 }, { 'val': 6.5, 'prob': 0.95 }, { 'val': 8, 'prob': 0.8 }, { 'val': 9, 'prob': 0.1 }, { 'val': 10, 'prob': 0 }])
@@ -114,7 +115,7 @@ def speedClusteringTransportationInfering(points):
             'to': toIndex,
             'dt': points[toIndex].getTimestamp() - points[fromIndex].getTimestamp(),
             'average_speed': sp,
-            # 'classification': probs,
+            'classification': probs,
             'label': choose_class(probs)
             })
 
@@ -122,10 +123,6 @@ def speedClusteringTransportationInfering(points):
     previous = cp_info[0]
     grouped = []
     cum_dt = cp_info[0]['dt']
-
-    print(len(cp_info))
-    print(len(points))
-    print(cp_info)
 
     for cp in cp_info[1:]:
         if cp['label'] != previous['label'] and cp['dt'] > CHANGE_TIME_THRESHOLD:
@@ -143,6 +140,19 @@ def speedClusteringTransportationInfering(points):
         print(g['label'], g['dt'], g['from'], g['to'])
 
     return grouped
+
+def applyTransitionProbability(previous, current):
+    transitions = {
+            'Stop': [0.5, 0.5],
+            'Vehicle': [0.5, 0.5]
+            }
+
+    tprob = transitions[previous['label']]
+    newProb = current['classification'] * tprob
+    current['classification'] = newProb
+    current['label'] = choose_class(newProb)
+
+    return current
 
 def choose_class(elm):
     reprs = ['Stop',

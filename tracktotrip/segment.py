@@ -120,18 +120,18 @@ class Segment:
             the maximum latitude and longitude of the segment
             slice
         """
-        pointSet = self.point[lowerIndex, upperIndex]
+        pointSet = self.points[lowerIndex:upperIndex]
 
-        minLat = 0
-        minLon = 0
-        maxLat = 0
-        maxLon = 0
+        minLat = float("inf")
+        minLon = float("inf")
+        maxLat = -float("inf")
+        maxLon = -float("inf")
 
         for point in pointSet:
             minLat = min(minLat, point.lat)
             minLon = min(minLon, point.lon)
-            maxLat = min(maxLat, point.lat)
-            maxLon = min(maxLon, point.lon)
+            maxLat = max(maxLat, point.lat)
+            maxLon = max(maxLon, point.lon)
 
         return [[minLat, minLon], [maxLat, maxLon]]
 

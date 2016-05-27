@@ -159,13 +159,10 @@ class Track:
         else:
             name = self.generateName()
 
-        self.removeNoise(2)
+        # self.removeNoise(2)
         self.smooth()
         self.segment()
-        # for segment in self.segments:
-            # plt.plot(map(lambda p: p.vel, segment.points))
-        # plt.savefig("a.png", dpi=200, format='png', transparent=True, figsize=(10, 10))
-        # self.simplify()
+        self.simplify()
         self.name = name
 
         return self
