@@ -1,5 +1,5 @@
 from .Point import Point
-from .smooth import smoothSegment
+from smooth import smooth_segment
 from .noiseDetection import removeNoise
 from .simplify import simplify
 from .preprocess import preprocessSegment
@@ -87,9 +87,9 @@ class Segment:
             points: points of the segment
         """
         self.points = points
-        self.transportationModes = []
-        self.locationFrom = None
-        self.locationTo = None
+        self.transportation_modes = []
+        self.location_from = None
+        self.location_to = None
 
     def pointAt(self, i):
         """Point at index
@@ -155,7 +155,7 @@ class Segment:
         Returns:
             This segment
         """
-        self.points = smoothSegment(self.points)
+        self.points = smooth_segment(self.points)
         return self
 
     def segment(self):
@@ -205,8 +205,8 @@ class Segment:
         """
 
         locations = inferLocation(self.points)
-        self.locationFrom = locations[0]
-        self.locationTo = locations[1]
+        self.location_from = locations[0]
+        self.location_to = locations[1]
 
         return self
 
@@ -218,7 +218,7 @@ class Segment:
         Returns:
             This segment
         """
-        self.transportationModes = inferTransportationMode(self.points)
+        self.transportation_modes = inferTransportationMode(self.points)
         return self
 
     def toJSON(self):
@@ -230,9 +230,9 @@ class Segment:
         """
         return {
                 'points': map(lambda point: point.toJSON(), self.points),
-                'transportationModes': self.transportationModes,
-                'locationFrom': self.locationFrom.toJSON() if self.locationFrom != None else None,
-                'locationTo': self.locationTo.toJSON() if self.locationTo != None else None
+                'transportationModes': self.transportation_modes,
+                'locationFrom': self.location_from.toJSON() if self.location_from != None else None,
+                'locationTo': self.location_to.toJSON() if self.location_to != None else None
                 }
 
     def length(self):
