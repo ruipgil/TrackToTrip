@@ -5,63 +5,9 @@ from .simplify import simplify
 from .preprocess import preprocessSegment
 from .Location import inferLocation
 from .transportationMode import inferTransportationMode
-
-from sklearn.cluster import DBSCAN
-from sklearn.preprocessing import StandardScaler
-
-def segmentSegment(points):
-    """
-    Makes spatiotemporal checks to see if two or more tracks are
-    recorded in the current one
-
-    Returns segmented
-    """
-    X = map(lambda p: p.gen3arr(), points)
-    X = StandardScaler().fit_transform(X)
-    # eps=0.15,min_samples=80
-    db = DBSCAN(eps=0.15, min_samples=80).fit(X)
-    labels = db.labels_
-
-    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-
-    segments = [[] for o in range(n_clusters_+1)]
-    clusters = [[] for o in range(n_clusters_+1)]
-    currentSegment = 0
-    for i, label in enumerate(labels):
-        if label != -1 and label + 1 != currentSegment:
-            currentSegment = label + 1
-        point = points[i]
-        segments[currentSegment].append(point)
-        if label == -1:
-            None
-        else:
-            clusters[label + 1].append(point)
-
-    # for si, segment in enumerate(segments):
-        # if (len(segments) - 1) > si:
-            # print(len(segments), si)
-            # print(segments[si + 1][0].toJSON())
-            # #segment.append(segments[si + 1][0])
-
-    """print(map(lambda s: len(s), segments))
-    for s in segments:
-        print(str(s[0]) + str(s[-1]))"""
-
-    p = [[] for o in range(n_clusters_)]
-    for i, l in enumerate(labels):
-        if l != -1:
-            p[l].append(points[i])
-
-    # for i, w in enumerate(p):
-        # print("Cluster! " + str(i))
-        # print(w[0])
-        # print(w[-1])
-        # #centroid = Point(-1, np.mean(map(lambda p: p.getLon(), w)), np.mean(map(lambda p: p.getLat(), w)), w[-1].getTime())
-        # centroid = w[-1]
-        # #segments[i].append(centroid)
-
-    # print(len(segments))
-    return segments
+from .spatiotemporal_segmentation import spatiotemporal_segmentation
+from .drp import drp
+from .similarity import sortSegmentPoints
 
 class Segment:
     """Holds the points and semantic information about them
@@ -133,7 +79,7 @@ class Segment:
             maxLat = max(maxLat, point.lat)
             maxLon = max(maxLon, point.lon)
 
-        return [[minLat, minLon], [maxLat, maxLon]]
+        return (minLat, minLon, maxLat, maxLon)
 
 
     def removeNoise(self, var=2):
@@ -167,17 +113,26 @@ class Segment:
         Returns:
             An array of arrays of points
         """
-        return segmentSegment(self.points)
+        return spatiotemporal_segmentation(self.points)
 
-    def simplify(self):
+    def simplify(self, topology_only=False):
         """In-place segment simplification
 
         Applies simplify function to points
 
+        Args:
+            topology_only: Boolean, optional. True to keep
+                the topology, neglecting velocity and time
+                accuracy (use common Douglas-Ramen-Peucker).
+                False (default) to simplify segment keeping
+                the velocity between points.
         Returns:
             This segment
         """
-        self.points = simplify(self.points, 0.01, 5)
+        if topology_only:
+            self.points = drp(self.points, 0.0001)
+        else:
+            self.points = simplify(self.points, 0.01, 5)
         return self
 
     def preprocess(self, destructive=True):
@@ -221,6 +176,13 @@ class Segment:
         self.transportation_modes = inferTransportationMode(self.points)
         return self
 
+    def merge_and_fit(self, segment):
+        """Merge points with another segment points
+
+        """
+        self.points = sortSegmentPoints(self.points, segment.points)
+        return self
+
     def toJSON(self):
         """Converts segment to a JSON serializable format
 
@@ -241,7 +203,7 @@ class Segment:
         Returns:
             Number of points of the segment
         """
-        return self.segments.length
+        return len(self.points)
 
     @staticmethod
     def fromGPX(gpxSegment):

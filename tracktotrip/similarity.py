@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 def dot(p1, p2):
     """Dot product between two points
@@ -90,6 +91,9 @@ def distance(a, b):
         Number
     """
     return math.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2)
+
+def distance_tt_point(a, b):
+    return math.sqrt((b.lat-a.lat)**2 + (b.lon-a.lon)**2)
 
 def closestPoint(a, b, p):
     """Finds closest point in a line segment
@@ -259,15 +263,15 @@ def segment_similarity(A, B):
 
     # print(prox_acc)
 
-    return sum(prox_acc) / lB, prox_acc
+    return np.mean(prox_acc), prox_acc
 
 def sortSegmentPoints(Aps, Bps):
     """Takes two line segments and sorts all their points,
     so that they form a continuous path
 
     Args:
-        Aps: Segment points
-        Bps: Segment points
+        Aps: Array of tracktotrip.Point
+        Bps: Array of tracktotrip.Point
     Returns:
         Array with points ordered
     """
@@ -275,9 +279,9 @@ def sortSegmentPoints(Aps, Bps):
     j = 0
     mid.append(Aps[0])
     for i in range(len(Aps)-1):
-        dist = distance(Aps[i], Aps[i+1])
+        dist = distance_tt_point(Aps[i], Aps[i+1])
         for m in range(j, len(Bps)):
-            distm = distance(Aps[i], Bps[m])
+            distm = distance_tt_point(Aps[i], Bps[m])
             if dist < distm:
                 j = m
                 break

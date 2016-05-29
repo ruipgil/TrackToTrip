@@ -3,6 +3,9 @@ from os.path import basename
 import matplotlib.pyplot as plt
 from .segment import Segment
 from copy import deepcopy
+from similarity import segment_similarity
+from rtree import index
+import numpy as np
 
 DEFAULT_FILE_NAME_FORMAT = "%Y-%m-%d"
 
@@ -101,14 +104,20 @@ class Track:
         self.segments = newSegments
         return self
 
-    def simplify(self):
+    def simplify(self, topology_only=False):
         """In-place simplification of segments
 
+        Args:
+            topology_only: Boolean, optional. True to keep
+                the topology, neglecting velocity and time
+                accuracy (use common Douglas-Ramen-Peucker).
+                False (default) to simplify segments keeping
+                the velocity between points.
         Returns:
             This track
         """
         for segment in self.segments:
-            segment.simplify()
+            segment.simplify(topology_only)
         return self
 
     def inferTransportationMode(self):
@@ -162,8 +171,8 @@ class Track:
         # self.removeNoise(2)
         self.smooth()
         self.segment()
-        self.simplify()
         self.name = name
+        # self.simplify()
 
         return self
 
@@ -208,6 +217,90 @@ class Track:
                 'name': self.name,
                 'segments': map(lambda segment: segment.toJSON(), self.segments)
                 }
+
+    def merge_and_fit(self, track, ff, threshold=0):
+        for (selfSegIndex, trackSegIndex, diffs) in ff:
+            selfS = self.segments[selfSegIndex]
+            trackS = track.segments[trackSegIndex]
+
+            selfS.merge_and_fit(trackS)
+        return self
+
+    def trim(self, p1, p2):
+        s1, pi1 = self.getPointIndex(p1)
+        s2, pi2 = self.getPointIndex(p2)
+
+        if s1 > s2:
+            temp = s1
+            s1 = s2
+            s2 = temp
+
+        if s2 == s1 and pi1 > pi2:
+            temp = pi1
+            pi1 = pi2
+            pi2 = temp
+
+        for i, segment in self.segments:
+            if s1 <= i and i <= s2:
+
+
+        return
+
+    def getPointIndex(self, point):
+        for i, segment in enumerate(self.segments):
+            idx = segment.getPointIndex(point)
+            if idx != -1:
+                return i, idx
+        return -1, -1
+
+    def hasPoint(self, point):
+        s_ix, _ = self.getPointIndex(point)
+        return s_ix != -1
+
+    def similarity(self, track):
+        """Compares two tracks based on their topology
+
+        This method compares the given track against this
+        instance. It only verifies if given track is close
+        to this one, not the other way arround
+
+        Args:
+            track: tracktotrip.Track to be compared with
+        Returns:
+            Two-tuple with global similarity between tracks
+            and an array the similarity between segments
+        """
+
+        idx = index.Index()
+        n = 0
+        for segment in self.segments:
+            idx.insert(n, segment.getBounds(), obj=segment)
+            n = n + 1
+
+        final_siml = []
+        final_diff = []
+        for i, segment in enumerate(track.segments):
+            query = idx.intersection(segment.getBounds(), objects=True)
+
+            res_siml = []
+            res_diff = []
+            for result in query:
+                siml, diff = segment_similarity(segment, result.object)
+                res_siml.append(siml)
+                res_diff.append((result.id, i, diff))
+                # print(result.id, i, diff)
+
+            # print("seg match", res_siml, res_diff)
+
+            if len(res_siml) > 0:
+                final_siml.append(max(res_siml))
+                final_diff.append(res_diff[np.argmax(res_siml)])
+            else:
+                final_siml.append(0)
+                final_diff.append([])
+
+        # print("fin", final_siml, final_diff)
+        return np.mean(final_siml), final_diff
 
     def toGPX(self):
         """Converts track to a GPX format
