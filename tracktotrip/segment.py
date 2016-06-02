@@ -8,6 +8,7 @@ from .transportationMode import inferTransportationMode
 from .spatiotemporal_segmentation import spatiotemporal_segmentation
 from .drp import drp
 from .similarity import sortSegmentPoints
+from copy import deepcopy
 
 class Segment:
     """Holds the points and semantic information about them
@@ -182,6 +183,9 @@ class Segment:
         """
         self.points = sortSegmentPoints(self.points, segment.points)
         return self
+
+    def copy(self):
+        return deepcopy(self)
 
     def toJSON(self):
         """Converts segment to a JSON serializable format

@@ -169,7 +169,7 @@ class Track:
             name = self.generateName()
 
         # self.removeNoise(2)
-        self.smooth()
+        # self.smooth()
         self.segment()
         self.name = name
         # self.simplify()
@@ -226,25 +226,25 @@ class Track:
             selfS.merge_and_fit(trackS)
         return self
 
-    def trim(self, p1, p2):
-        s1, pi1 = self.getPointIndex(p1)
-        s2, pi2 = self.getPointIndex(p2)
+    # def trim(self, p1, p2):
+        # s1, pi1 = self.getPointIndex(p1)
+        # s2, pi2 = self.getPointIndex(p2)
 
-        if s1 > s2:
-            temp = s1
-            s1 = s2
-            s2 = temp
+        # if s1 > s2:
+            # temp = s1
+            # s1 = s2
+            # s2 = temp
 
-        if s2 == s1 and pi1 > pi2:
-            temp = pi1
-            pi1 = pi2
-            pi2 = temp
+        # if s2 == s1 and pi1 > pi2:
+            # temp = pi1
+            # pi1 = pi2
+            # pi2 = temp
 
-        for i, segment in self.segments:
-            if s1 <= i and i <= s2:
+        # for i, segment in self.segments:
+            # if s1 <= i and i <= s2:
 
 
-        return
+        # return
 
     def getPointIndex(self, point):
         for i, segment in enumerate(self.segments):
@@ -252,6 +252,19 @@ class Track:
             if idx != -1:
                 return i, idx
         return -1, -1
+
+    def getBounds(self):
+        minLat = float("inf")
+        minLon = float("inf")
+        maxLat = -float("inf")
+        maxLon = -float("inf")
+        for segment in self.segments:
+            milat, milon, malat, malon = segment.getBounds()
+            minLat = min(milat, minLat)
+            minLon = min(milon, minLon)
+            maxLat = max(malat, maxLat)
+            maxLon = max(malon, maxLon)
+        return minLat, minLon, maxLat, maxLon
 
     def hasPoint(self, point):
         s_ix, _ = self.getPointIndex(point)

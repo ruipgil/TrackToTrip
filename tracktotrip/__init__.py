@@ -7,3 +7,4 @@ from .noiseDetection import noiseDetection
 #from .tracktotrip import tracktotrip
 from . import utils
 from .Track import Track
+from .learn_trip import learn_trip
