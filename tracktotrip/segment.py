@@ -8,6 +8,7 @@ from .transportationMode import inferTransportationMode
 from .spatiotemporal_segmentation import spatiotemporal_segmentation
 from .drp import drp
 from .similarity import sortSegmentPoints
+import numpy as np
 from copy import deepcopy
 
 class Segment:
@@ -183,6 +184,50 @@ class Segment:
         """
         self.points = sortSegmentPoints(self.points, segment.points)
         return self
+
+    def closestPointTo(self, point, thr = 0.001):
+        """Finds the closest point in the segment to
+        a given point
+
+        Args:
+            point: tracktotrip.Point
+            thr: Number, optional, distance threshold to be considered
+                the same point
+        Returns:
+            Number, index of the point. -1 if doesn't exist
+        """
+        distances = map(lambda p: p.distance(point), self.points)
+        minIndex = np.argmin(distances)
+
+        if distances[minIndex] > thr:
+            return -1
+        else:
+            return minIndex
+
+    def slice(self, start, end):
+        """Creates a copy of the current segment between
+        indexes. If end > start, points are reverted
+
+        Args:
+            start: Number, start index
+            end: Number, end index
+        Returns:
+            tracktotrip.Segment
+        """
+
+        reverse = False
+        if start > end:
+            temp = start
+            start = end
+            end = temp
+            reverse = True
+
+        seg = self.copy()
+        seg.points = seg.points[start:end+1]
+        if reverse:
+            seg.points = list(reversed(seg.points))
+
+        return seg
 
     def copy(self):
         return deepcopy(self)
