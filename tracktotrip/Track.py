@@ -37,7 +37,7 @@ class Track:
                 value is an empty array
         """
         self.name = name
-        self.segments = segments
+        self.segments = sorted(segments, key=lambda s: s.getStartTime())
         self.preprocessed = False
 
     def segmentAt(self, i):
@@ -49,6 +49,15 @@ class Track:
             A TrackToTrip segment or an excption for index out of range
         """
         return self.segments[i]
+
+    def getStartTime(self):
+        lastTime = None
+        for segment in self.segments:
+            if lastTime is None:
+                lastTime = segment.getStartTime()
+            elif lastTime > segment.getStartTime():
+                lastTime = segment.getStartTime()
+        return lastTime
 
     def generateName(self):
         """Generates a name for the track

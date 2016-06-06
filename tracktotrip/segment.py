@@ -185,7 +185,7 @@ class Segment:
         self.points = sortSegmentPoints(self.points, segment.points)
         return self
 
-    def closestPointTo(self, point, thr = 0.001):
+    def closestPointTo(self, point, thr=20.0):
         """Finds the closest point in the segment to
         a given point
 
@@ -197,7 +197,9 @@ class Segment:
             Number, index of the point. -1 if doesn't exist
         """
         distances = map(lambda p: p.distance(point), self.points)
+        print(distances)
         minIndex = np.argmin(distances)
+        print(minIndex, distances[minIndex])
 
         if distances[minIndex] > thr:
             return -1
@@ -223,6 +225,7 @@ class Segment:
             reverse = True
 
         seg = self.copy()
+        print("slicing %s-%s" % (start, end))
         seg.points = seg.points[start:end+1]
         if reverse:
             seg.points = list(reversed(seg.points))
