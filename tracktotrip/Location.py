@@ -29,16 +29,18 @@ def inferLocation(segment):
 LOC_THRESHOLD = 5
 
 class Location:
-    def __init__(self, label, position):
+    def __init__(self, label, position, other = []):
         self.label = label
         self.centroid = position
+        self.other = other
     def distance(self, position):
         return self.centroid.distance(position)
 
     def toJSON(self):
         return {
                 'label': self.label,
-                'position': self.centroid.toJSON()
+                'position': self.centroid.toJSON(),
+                'other': self.other
                 }
     @staticmethod
     def fromJSON(json):
