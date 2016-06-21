@@ -2,7 +2,7 @@ from .Point import Point
 from smooth import smooth_segment
 from .noiseDetection import removeNoise
 from .simplify import simplify
-from .preprocess import preprocessSegment
+from .preprocess import preprocessSegment, MAX_ACC
 from .Location import inferLocation
 from .transportationMode import inferTransportationMode
 from .spatiotemporal_segmentation import spatiotemporal_segmentation
@@ -10,6 +10,7 @@ from .drp import drp
 from .similarity import sortSegmentPoints
 import numpy as np
 from copy import deepcopy
+import defaults
 
 class Segment:
     """Holds the points and semantic information about them
@@ -92,10 +93,10 @@ class Segment:
         Returns:
             This segment
         """
-        self.points = removeNoise(self.points, var=2)
+        self.points = removeNoise(self.points, var=var)
         return self
 
-    def smooth(self):
+    def smooth(self, strategy=defaults.SMOOTH_STRATEGY, n_iter=defaults.SMOOTH_N_ITER):
         """In-place smoothing
 
         Applies smoothSegment function to points
@@ -103,10 +104,10 @@ class Segment:
         Returns:
             This segment
         """
-        self.points = smooth_segment(self.points)
+        self.points = smooth_segment(self.points, strategy=strategy, n_iter=n_iter)
         return self
 
-    def segment(self):
+    def segment(self, eps=defaults.SEGMENT_EPS, min_samples=defaults.SEGMENT_MIN_SAMPLES):
         """Spatio-temporal segmentation
 
         Applies segmentSegment function to points,
@@ -115,9 +116,9 @@ class Segment:
         Returns:
             An array of arrays of points
         """
-        return spatiotemporal_segmentation(self.points)
+        return spatiotemporal_segmentation(self.points, eps, min_samples)
 
-    def simplify(self, topology_only=False):
+    def simplify(self, topology_only=False, max_time=defaults.SIMPLIFY_MAX_TIME, max_distance=defaults.SIMPLIFY_MAX_DISTANCE, eps=defaults.SIMPLIFY_EPS):
         """In-place segment simplification
 
         Applies simplify function to points
@@ -132,12 +133,12 @@ class Segment:
             This segment
         """
         if topology_only:
-            self.points = drp(self.points, 0.0001)
+            self.points = drp(self.points, eps)
         else:
-            self.points = simplify(self.points, 0.01, 5)
+            self.points = simplify(self.points, max_distance, max_time)
         return self
 
-    def preprocess(self, destructive=True):
+    def preprocess(self, destructive=True, maxAcc=MAX_ACC):
         """In-place segment preprocessing
 
         Applies preprocessSegment function to points
@@ -148,7 +149,7 @@ class Segment:
         Returns:
             This segment
         """
-        points, skipped = preprocessSegment(self.points, destructive=destructive)
+        points, skipped = preprocessSegment(self.points, destructive=destructive, maxAcc=maxAcc)
         self.points = points
         return self
 
@@ -167,7 +168,7 @@ class Segment:
 
         return self
 
-    def inferTransportationMode(self):
+    def inferTransportationMode(self, removeStops=defaults.TM_REMOVE_STOPS, dt_threshold=defaults.TM_DT_THRESHOLD):
         """In-place transportation mode inferring
 
         Applies inferTransportationMode function to points
@@ -175,7 +176,7 @@ class Segment:
         Returns:
             This segment
         """
-        self.transportation_modes = inferTransportationMode(self.points)
+        self.transportation_modes = inferTransportationMode(self.points, removeStops=removeStops, dt_threshold=dt_threshold)
         return self
 
     def merge_and_fit(self, segment):

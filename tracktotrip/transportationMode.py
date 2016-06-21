@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 from .changepoint import changepoint
 import numpy as np
 
-def inferTransportationMode(points, method="Changepoint", removeStops=False):
+CHANGE_TIME_THRESHOLD = 10 #60 seconds
+def inferTransportationMode(points, method="Changepoint", removeStops=False, dt_threshold=CHANGE_TIME_THRESHOLD):
     if method == "Naive":
         tmodes = naiveTransportationInferring(points)
         tgroup = group(tmodes)
@@ -21,8 +22,7 @@ def inferTransportationMode(points, method="Changepoint", removeStops=False):
                 })
         return result
     elif method == "Changepoint":
-        tmodes = speedClusteringTransportationInfering(points)
-        print(tmodes)
+        tmodes = speedClusteringTransportationInfering(points, dt_threshold=dt_threshold)
         if removeStops:
             return filter(lambda tm: tm['label'] != 'Stop', tmodes)
         else:
@@ -92,9 +92,7 @@ def softClassifySpeed(speed):
             vehicle(speed)
             ]
 
-
-CHANGE_TIME_THRESHOLD = 10 #60 seconds
-def speedClusteringTransportationInfering(points):
+def speedClusteringTransportationInfering(points, dt_threshold=CHANGE_TIME_THRESHOLD):
     vels = map(lambda p: p.vel, points)
     # get changepoint indexes
     cp = changepoint(vels)
@@ -125,7 +123,7 @@ def speedClusteringTransportationInfering(points):
     cum_dt = cp_info[0]['dt']
 
     for cp in cp_info[1:]:
-        if cp['label'] != previous['label'] and cp['dt'] > CHANGE_TIME_THRESHOLD:
+        if cp['label'] != previous['label'] and cp['dt'] > dt_threshold:
             previous['to'] = cp['from']
             previous['dt'] = cum_dt
             grouped.append(previous)

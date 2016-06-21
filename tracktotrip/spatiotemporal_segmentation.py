@@ -1,7 +1,7 @@
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 
-def spatiotemporal_segmentation(points):
+def spatiotemporal_segmentation(points, eps=0.15, min_samples=80):
     """
     Makes spatiotemporal checks to see if two or more tracks are
     recorded in the current one
@@ -11,7 +11,7 @@ def spatiotemporal_segmentation(points):
     X = map(lambda p: p.gen3arr(), points)
     X = StandardScaler().fit_transform(X)
     # eps=0.15,min_samples=80
-    db = DBSCAN(eps=0.15, min_samples=80).fit(X)
+    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     labels = db.labels_
 
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)

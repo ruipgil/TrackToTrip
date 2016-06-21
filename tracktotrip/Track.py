@@ -1,15 +1,14 @@
 import gpxpy
 from os.path import basename
-import matplotlib.pyplot as plt
 from .segment import Segment
+from .preprocess import MAX_ACC
 from copy import deepcopy
 from similarity import segment_similarity
 from rtree import index
 import numpy as np
+import defaults
 
 DEFAULT_FILE_NAME_FORMAT = "%Y-%m-%d"
-
-# TODO: order each segment by starting date
 
 class Track:
     """Collection of segments
@@ -59,7 +58,7 @@ class Track:
                 lastTime = segment.getStartTime()
         return lastTime
 
-    def generateName(self):
+    def generateName(self, f=DEFAULT_FILE_NAME_FORMAT):
         """Generates a name for the track
 
         The name is generated based on the date of the first point of the
@@ -70,7 +69,7 @@ class Track:
             A string of the generated name
         """
         if len(self.segments) > 0:
-            return self.segmentAt(0).pointAt(0).time.strftime(DEFAULT_FILE_NAME_FORMAT) + ".gpx"
+            return self.segmentAt(0).pointAt(0).time.strftime(f) + ".gpx"
         else:
             return "EmptyTrack"
 
@@ -86,17 +85,17 @@ class Track:
             segment.removeNoise(var)
         return self
 
-    def smooth(self):
+    def smooth(self, strategy=defaults.SMOOTH_STRATEGY, n_iter=defaults.SMOOTH_N_ITER):
         """In-place smoothing of segments
 
         Returns:
             This track
         """
         for segment in self.segments:
-            segment.smooth()
+            segment.smooth(strategy=strategy, n_iter=n_iter)
         return self
 
-    def segment(self):
+    def segment(self, eps=defaults.SEGMENT_EPS, min_samples=defaults.SEGMENT_MIN_SAMPLES):
         """In-place segmentation of segments
 
         Spatio-temporal segmentation of each segment
@@ -113,7 +112,7 @@ class Track:
         self.segments = newSegments
         return self
 
-    def simplify(self, topology_only=False):
+    def simplify(self, topology_only=False, max_time=defaults.SIMPLIFY_MAX_TIME, max_distance=defaults.SIMPLIFY_MAX_DISTANCE):
         """In-place simplification of segments
 
         Args:
@@ -126,17 +125,17 @@ class Track:
             This track
         """
         for segment in self.segments:
-            segment.simplify(topology_only)
+            segment.simplify(topology_only, max_time=max_time, max_distance=max_distance)
         return self
 
-    def inferTransportationMode(self):
+    def inferTransportationMode(self, removeStops=defaults.TM_REMOVE_STOPS, dt_threshold=defaults.TM_DT_THRESHOLD):
         """In-place transportation mode inferring of segments
 
         Returns:
             This track
         """
         for segment in self.segments:
-            segment.inferTransportationMode()
+            segment.inferTransportationMode(removeStops=removeStops, dt_threshold=dt_threshold)
         return self
 
     def copy(self):
@@ -150,7 +149,7 @@ class Track:
 
         return deepcopy(self)
 
-    def toTrip(self, name=""):
+    def toTrip(self, name="", noise_var=2, smooth_strategy='inverse', smooth_iter=5, seg_eps=0.15, seg_min_samples=80, simplify_max_distance=0.01, simplify_max_time=5, file_format=DEFAULT_FILE_NAME_FORMAT):
         """In-place, transformation of a track into a trip
 
         A trip is a more accurate depiction of reality than a
@@ -175,17 +174,18 @@ class Track:
         if len(name) != 0:
             name = self.name
         else:
-            name = self.generateName()
+            name = self.generateName(file_format)
 
-        # self.removeNoise(2)
-        # self.smooth()
-        self.segment()
+        # self.removeNoise(noise_var)
+
+        self.smooth(smooth_strategy, smooth_iter)
+        self.segment(seg_eps, seg_min_samples)
         self.name = name
-        # self.simplify()
+        self.simplify(max_distance=simplify_max_distance, max_time=simplify_max_time)
 
         return self
 
-    def preprocess(self, destructive=True):
+    def preprocess(self, destructive=True, maxAcc=MAX_ACC):
         """In-place preprocessing of segments
 
         Args:
@@ -194,17 +194,17 @@ class Track:
         Returns:
             This track
         """
-        self.segments = map(lambda segment: segment.preprocess(destructive), self.segments)
+        self.segments = map(lambda segment: segment.preprocess(destructive, maxAcc), self.segments)
         self.preprocessed = True
         return self
 
-    def inferTransportationModes(self):
+    def inferTransportationModes(self, removeStops=False, dt_threshold=10):
         """In-place transportation inferring of segments
 
         Returns:
             This track
         """
-        self.segments = map(lambda segment: segment.inferTransportationMode(), self.segments)
+        self.segments = map(lambda segment: segment.inferTransportationMode(removeStops=removeStops, dt_threshold=dt_threshold), self.segments)
         return self
 
     def inferLocation(self):

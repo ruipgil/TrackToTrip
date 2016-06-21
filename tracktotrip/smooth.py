@@ -86,7 +86,7 @@ def smooth_with_inverse(points, n_iter=2):
     noiseSample = 20
     return list(reversed(part))[:N-noiseSample] + total[(N-noiseSample):]
 
-def smooth_segment(segment, strategy="inverse"):
+def smooth_segment(segment, strategy="inverse", n_iter=2):
     """Smooths a segment points
 
     Args:
