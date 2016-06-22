@@ -7,7 +7,7 @@ reqs = [str(ir.req) for ir in install_reqs]
 setup(
   name = 'tracktotrip',
   packages = ['tracktotrip'],
-  version = '0.1.3',
+  version = '0.1.4',
   description = 'Track processing library',
   author = 'Rui Gil',
   author_email = 'ruipgil@gmail.com',
