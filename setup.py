@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
   name = 'tracktotrip',
   packages = ['tracktotrip'],
-  version = '0.1',
+  version = '0.1.1',
   description = 'Track processing library',
   author = 'Rui Gil',
   author_email = 'ruipgil@gmail.com',
