@@ -1,12 +1,13 @@
 from distutils.core import setup
+from pip.req import parse_requirements
 
-with open('requirements.txt') as f:
-    required = f.read().splitlines()
+install_reqs = parse_requirements('.', session=False)
+reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
   name = 'tracktotrip',
   packages = ['tracktotrip'],
-  version = '0.1.2',
+  version = '0.1.3',
   description = 'Track processing library',
   author = 'Rui Gil',
   author_email = 'ruipgil@gmail.com',
@@ -14,5 +15,5 @@ setup(
   download_url = 'https://github.com/ruipgil/TrackToTrip/archive/master.zip',
   keywords = ['track', 'trip', 'GPS', 'GPX'],
   classifiers = [],
-  install_requires=required,
+  install_requires=reqs,
 )
