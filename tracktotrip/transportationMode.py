@@ -1,5 +1,5 @@
 from sklearn import tree
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from .changepoint import changepoint
 import numpy as np
 
@@ -66,16 +66,16 @@ def buildSoftClassifier(steps):
         return clf.predict_proba([[val]])[0][1]
     return getProb, clf
 
-def plotSoftClassifier(clf, step, N=100):
-    stp = step/N
-    res = []
-    for i in range(N):
-        v = stp * i
-        res.append([
-            v, clf.predict_proba([[v]])
-            ])
-    plt.plot(map(lambda a: a[0], res), map(lambda a: a[1][0][1], res))
-    return plt
+# def plotSoftClassifier(clf, step, N=100):
+#     stp = step/N
+#     res = []
+#     for i in range(N):
+#         v = stp * i
+#         res.append([
+#             v, clf.predict_proba([[v]])
+#             ])
+#     plt.plot(map(lambda a: a[0], res), map(lambda a: a[1][0][1], res))
+#     return plt
 
 stop, stopdt = buildSoftClassifier([{ 'val': 0, 'prob': 1 }, { 'val': 1, 'prob': 0.9 }, { 'val': 5, 'prob': 0.18 }, { 'val': 6.5, 'prob': 0 }])
 walk, walkdt = buildSoftClassifier([{ 'val': 0, 'prob': 0 }, { 'val': 2, 'prob': 0.1 }, { 'val': 5, 'prob': 0.8 }, { 'val': 6.5, 'prob': 0.95 }, { 'val': 8, 'prob': 0.8 }, { 'val': 9, 'prob': 0.1 }, { 'val': 10, 'prob': 0 }])

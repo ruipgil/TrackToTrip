@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import normalize
 
@@ -34,23 +33,23 @@ def distance(arr):
         last = elm
     return result
 
-def plot(track, dots, noiseSet, average, variance):
-    """
-    Plot dot product of a track, alongside average and variance. Noise points
-        are shown as dots
-
-    Returns the matplotlib plot
-    """
-    # print(average, variance, average-variance, average+variance)
-
-    plt.plot(dots)
-    plt.plot([0, len(dots)], [average, average])
-    plt.plot([0, len(dots)], [average-variance, average-variance])
-    plt.plot([0, len(dots)], [average+variance, average+variance])
-    for n in noiseSet:
-        plt.plot(n, dots[n], 'o')
-
-    return plt
+# def plot(track, dots, noiseSet, average, variance):
+#     """
+#     Plot dot product of a track, alongside average and variance. Noise points
+#         are shown as dots
+#
+#     Returns the matplotlib plot
+#     """
+#     # print(average, variance, average-variance, average+variance)
+#
+#     plt.plot(dots)
+#     plt.plot([0, len(dots)], [average, average])
+#     plt.plot([0, len(dots)], [average-variance, average-variance])
+#     plt.plot([0, len(dots)], [average+variance, average+variance])
+#     for n in noiseSet:
+#         plt.plot(n, dots[n], 'o')
+#
+#     return plt
 
 def noiseDetection(segments, var=1):
     """
