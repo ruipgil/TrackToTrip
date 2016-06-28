@@ -185,7 +185,7 @@ class Track:
 
         return self
 
-    def preprocess(self, destructive=True, maxAcc=MAX_ACC):
+    def preprocess(self, destructive=True, max_acc=MAX_ACC):
         """In-place preprocessing of segments
 
         Args:
@@ -194,7 +194,7 @@ class Track:
         Returns:
             This track
         """
-        self.segments = map(lambda segment: segment.preprocess(destructive, maxAcc), self.segments)
+        self.segments = map(lambda segment: segment.preprocess(destructive, max_acc), self.segments)
         self.preprocessed = True
         return self
 
