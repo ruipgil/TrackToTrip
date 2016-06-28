@@ -85,14 +85,14 @@ class Track:
             segment.removeNoise(var)
         return self
 
-    def smooth(self, strategy=defaults.SMOOTH_STRATEGY, n_iter=defaults.SMOOTH_N_ITER):
+    def smooth(self, strategy=defaults.SMOOTH_STRATEGY, noise=defaults.SMOOTH_NOISE):
         """In-place smoothing of segments
 
         Returns:
             This track
         """
         for segment in self.segments:
-            segment.smooth(strategy=strategy, n_iter=n_iter)
+            segment.smooth(strategy=strategy, noise=noise)
         return self
 
     def segment(self, eps=defaults.SEGMENT_EPS, min_samples=defaults.SEGMENT_MIN_SAMPLES):
@@ -149,7 +149,18 @@ class Track:
 
         return deepcopy(self)
 
-    def toTrip(self, name="", noise_var=2, smooth_strategy='inverse', smooth_iter=5, seg_eps=0.15, seg_min_samples=80, simplify_max_distance=0.01, simplify_max_time=5, file_format=DEFAULT_FILE_NAME_FORMAT):
+    def toTrip(
+        self,
+        name="",
+        noise_var=2,
+        smooth_strategy='inverse',
+        smooth_noise=defaults.SMOOTH_NOISE,
+        seg_eps=0.15,
+        seg_min_samples=80,
+        simplify_max_distance=0.01,
+        simplify_max_time=5,
+        file_format=DEFAULT_FILE_NAME_FORMAT
+    ):
         """In-place, transformation of a track into a trip
 
         A trip is a more accurate depiction of reality than a
@@ -178,7 +189,7 @@ class Track:
 
         # self.removeNoise(noise_var)
 
-        self.smooth(smooth_strategy, smooth_iter)
+        self.smooth(smooth_strategy, smooth_noise)
         self.segment(seg_eps, seg_min_samples)
         self.name = name
         self.simplify(max_distance=simplify_max_distance, max_time=simplify_max_time)

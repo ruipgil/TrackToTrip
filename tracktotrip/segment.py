@@ -96,7 +96,7 @@ class Segment:
         self.points = removeNoise(self.points, var=var)
         return self
 
-    def smooth(self, strategy=defaults.SMOOTH_STRATEGY, n_iter=defaults.SMOOTH_N_ITER):
+    def smooth(self, strategy=defaults.SMOOTH_STRATEGY, noise=defaults.SMOOTH_NOISE):
         """In-place smoothing
 
         Applies smoothSegment function to points
@@ -104,7 +104,7 @@ class Segment:
         Returns:
             This segment
         """
-        self.points = smooth_segment(self.points, strategy=strategy, n_iter=n_iter)
+        self.points = smooth_segment(self.points, strategy=strategy, noise=noise)
         return self
 
     def segment(self, eps=defaults.SEGMENT_EPS, min_samples=defaults.SEGMENT_MIN_SAMPLES):

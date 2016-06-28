@@ -1,17 +1,13 @@
-from pykalman import KalmanFilter
+# py_kalman from https://github.com/open-city/ikalman
+import py_kalman
 
-def kalman_filter(measurements, dt, n_iter=2):
-    transition = [
-            [1, dt, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 1, dt],
-            [0, 0, 0, 1]]
-    observation = [
-            [1, 0, 0, 0],
-            [0, 0, 1, 0]]
-    initial = [measurements[0][0], measurements[0][1], 0, 0]
-    kf = KalmanFilter(transition_matrices = transition, observation_matrices = observation, initial_state_mean=initial)
-    kf = kf.em(measurements, n_iter=n_iter)
-    (smoothed_state_means, smoothed_state_covariances) = kf.smooth(measurements)
+def kalman_filter(points, noise=1.0):
+    kf = py_kalman.filter(noise)
+    for point in points:
+        kf.update_velocity2d(point.lat, point.lon, point.dt)
 
-    return map(lambda s: [s[0], s[2]], smoothed_state_means)
+        (lat, lon) = kf.get_lat_long()
+        point.lat = lat
+        point.lon = lon
+    return points
+
