@@ -128,14 +128,14 @@ class Track:
             segment.simplify(topology_only, max_time=max_time, max_distance=max_distance)
         return self
 
-    def inferTransportationMode(self, removeStops=defaults.TM_REMOVE_STOPS, dt_threshold=defaults.TM_DT_THRESHOLD):
+    def inferTransportationMode(self, clf, removeStops=defaults.TM_REMOVE_STOPS, dt_threshold=defaults.TM_DT_THRESHOLD):
         """In-place transportation mode inferring of segments
 
         Returns:
             This track
         """
         for segment in self.segments:
-            segment.inferTransportationMode(removeStops=removeStops, dt_threshold=dt_threshold)
+            segment.inferTransportationMode(clf, removeStops=removeStops, dt_threshold=dt_threshold)
         return self
 
     def copy(self):

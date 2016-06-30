@@ -168,7 +168,7 @@ class Segment:
 
         return self
 
-    def inferTransportationMode(self, removeStops=defaults.TM_REMOVE_STOPS, dt_threshold=defaults.TM_DT_THRESHOLD):
+    def inferTransportationMode(self, clf, removeStops=defaults.TM_REMOVE_STOPS, dt_threshold=defaults.TM_DT_THRESHOLD):
         """In-place transportation mode inferring
 
         Applies inferTransportationMode function to points
@@ -176,7 +176,7 @@ class Segment:
         Returns:
             This segment
         """
-        self.transportation_modes = inferTransportationMode(self.points, removeStops=removeStops, dt_threshold=dt_threshold)
+        self.transportation_modes = inferTransportationMode(self.points, removeStops=removeStops, dt_threshold=dt_threshold, clf=clf)
         return self
 
     def merge_and_fit(self, segment):
