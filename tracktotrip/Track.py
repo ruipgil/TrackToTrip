@@ -218,13 +218,24 @@ class Track:
         self.segments = map(lambda segment: segment.inferTransportationMode(removeStops=removeStops, dt_threshold=dt_threshold), self.segments)
         return self
 
-    def inferLocation(self):
+    def inferLocation(
+        self,
+        location_query,
+        max_distance=defaults.LOCATION_MAX_DISTANCE,
+        google_key='',
+        limit=defaults.LOCATIONS_LIMIT
+    ):
         """In-place location inferring of segments
 
         Returns:
             This track
         """
-        self.segments = map(lambda segment: segment.inferLocation(), self.segments)
+        self.segments = map(lambda segment: segment.inferLocation(
+            location_query,
+            max_distance,
+            google_key,
+            limit
+        ), self.segments)
         return self
 
     def toJSON(self):

@@ -153,7 +153,13 @@ class Segment:
         self.points = points
         return self
 
-    def inferLocation(self):
+    def inferLocation(
+        self,
+        location_query,
+        max_distance=defaults.LOCATION_MAX_DISTANCE,
+        google_key='',
+        limit=defaults.LOCATIONS_LIMIT
+    ):
         """In-place location inferring
 
         Applies inferLocation function to points
@@ -162,9 +168,20 @@ class Segment:
             This segment
         """
 
-        locations = inferLocation(self.points)
-        self.location_from = locations[0]
-        self.location_to = locations[1]
+        self.location_from = inferLocation(
+            self.points[0],
+            location_query,
+            max_distance=max_distance,
+            google_key=google_key,
+            limit=limit
+        )
+        self.location_to = inferLocation(
+            self.points[-1],
+            location_query,
+            max_distance=max_distance,
+            google_key=google_key,
+            limit=limit
+        )
 
         return self
 

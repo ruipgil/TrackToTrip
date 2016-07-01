@@ -139,7 +139,7 @@ class Classifier:
         self.classifiers = classifiers
 
     def choose_class(self, elm):
-        return sorted(elm, keyed=lambda e: e['value'])[0]['label']
+        return sorted(elm, key=lambda e: e['value'])[0]['label']
 
     def soft_classify_speed(self, speed):
         result = []
@@ -167,9 +167,9 @@ class Classifier:
         vehicle, vehicledt = buildSoftClassifier([{ 'val': 9, 'prob': 0 }, { 'val': 10, 'prob': 0.05 }, { 'val': 20, 'prob': 0.05 }, { 'val': 38, 'prob': 0.9 }, { 'val': 40, 'prob': 1 }])
 
         return Classifier({
-            'stop': stop,
-            'walk': walk,
-            'vehicle': vehicle
+            'Stop': stop,
+            'Foot': walk,
+            'Vehicle': vehicle
             })
 
 def generateDatasetOn(arr, T=1, F=0, interpolate=1):
