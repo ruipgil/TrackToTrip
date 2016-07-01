@@ -1,9 +1,49 @@
 import defaults
 import requests
+from sklearn.cluster import DBSCAN
+import numpy as np
 
 
 GOOGLE_PLACES_URL = 'https://maps.googleapis.com/maps/api/place/nearbysearch' \
     '/json?location=%s,%s&radius=%s&key=%s'
+
+def computeCentroid(points):
+    xs = map(lambda p: p[0], points)
+    ys = map(lambda p: p[1], points)
+    centroid = [np.mean(xs), np.mean(ys)]
+    return centroid
+
+def updateLocationCentroid(point, cluster, eps=0.00006, min_samples=2):
+    X = map(lambda p: p.gen2arr(), cluster)
+    X.append(point.gen2arr())
+
+    km = DBSCAN(eps=eps, min_samples=min_samples)
+    km.fit(X)
+
+    clusters = {}
+    for i in range(len(X)):
+        label = km.labels_[i]
+        if label in clusters.keys():
+            clusters[label].append(X[i])
+        else:
+            clusters[label] = [X[i]]
+
+    centroids = []
+    biggest_centroid_l = -float("inf")
+    biggestCentroid=None
+
+    for label, cluster in clusters.items():
+        centroid = computeCentroid(cluster)
+        centroids.append(centroid)
+
+        if label >= 0 and len(cluster) >= biggest_centroid_l:
+            biggest_centroid_l = len(cluster)
+            biggestCentroid = centroid
+
+    if biggestCentroid is None:
+        biggestCentroid = computeCentroid(X)
+
+    return biggestCentroid, X
 
 
 def query_google(point, max_distance, key):
