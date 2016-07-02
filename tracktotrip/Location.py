@@ -2,6 +2,8 @@ import defaults
 import requests
 from sklearn.cluster import DBSCAN
 import numpy as np
+from utils import estimate_meters_to_deg
+from math import sqrt
 
 
 GOOGLE_PLACES_URL = 'https://maps.googleapis.com/maps/api/place/nearbysearch' \
@@ -13,9 +15,11 @@ def computeCentroid(points):
     centroid = [np.mean(xs), np.mean(ys)]
     return centroid
 
-def updateLocationCentroid(point, cluster, eps=0.00006, min_samples=2):
+def updateLocationCentroid(point, cluster, max_distance=defaults.LOCATION_MAX_DISTANCE, min_samples=2):
     X = map(lambda p: p.gen2arr(), cluster)
     X.append(point.gen2arr())
+
+    eps = estimate_meters_to_deg(sqrt(max_distance), precision=5)
 
     km = DBSCAN(eps=eps, min_samples=min_samples)
     km.fit(X)
