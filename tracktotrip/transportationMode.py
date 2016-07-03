@@ -76,8 +76,8 @@ def speedClusteringTransportationInfering(clf, points, dt_threshold=defaults.TM_
     grouped.append(previous)
 
 
-    for g in grouped:
-        print(g['label'], g['dt'], g['from'], g['to'])
+    # for g in grouped:
+    #     print(g['label'], g['dt'], g['from'], g['to'])
 
     return grouped
 

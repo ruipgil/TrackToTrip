@@ -369,6 +369,55 @@ class Track:
     def toLIFE(self):
         """Converts track to LIFE format
         """
+        buff = "--%s\n" % self.segments[0].points[0].time.strftime("%Y_%m_%d")
+        # buff += "--" + day
+        # buff += "UTC+s" # if needed
+
+        def militaryTime(time):
+            return time.strftime("%H%M")
+
+        def stay(buff, start, end, place):
+            if type(start) is not str:
+                start = militaryTime(start)
+            if type(end) is not str:
+                end = militaryTime(end)
+
+            return "%s\n%s-%s: %s" % (buff, start, end, place.label)
+
+        def trip(buff, segment):
+            tp = "%s-%s: %s -> %s" % (
+                militaryTime(segment.points[0].time),
+                militaryTime(segment.points[-1].time),
+                segment.location_from.label,
+                segment.location_to.label
+            )
+
+            t_modes = segment.transportation_modes
+            if len(t_modes) == 1:
+                tp = "%s [%s]" % (tp, t_modes[0]['label'])
+            else:
+                modes = []
+                for mode in t_modes:
+                    f = militaryTime(segment.points[mode['from']].time)
+                    t = militaryTime(segment.points[mode['to']].time)
+                    modes.append("    %s-%s: [%s]" % (f, t, mode['label']))
+                tp = "%s\n%s" % (tp, "\n".join(modes))
+
+            return "%s\n%s" % (buff, tp)
+
+        LAST = len(self.segments) - 1
+        for i, segment in enumerate(self.segments):
+            if i == 0:
+                buff = stay(buff, "0000", militaryTime(segment.points[0].time), segment.location_from)
+            buff = trip(buff, segment)
+            if i is LAST:
+                buff = stay(buff, militaryTime(segment.points[0].time), "2359", segment.location_to)
+            else:
+                next_seg = self.segments[i+1]
+                buff = stay(buff, militaryTime(segment.points[-1].time), militaryTime(next_seg.points[0].time), segment.location_from)
+
+        return buff
+
         # TODO use LIFE own types
 
         # spans = []
