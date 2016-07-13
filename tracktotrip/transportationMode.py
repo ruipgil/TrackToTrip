@@ -32,6 +32,10 @@ def inferTransportationMode(points, method="Changepoint", removeStops=False, dt_
         else:
             return tmodes
 
+def extractFeatures(points):
+    vels = map(lambda p: p.vel, points)
+    return np.mean(vels)
+
 def speedClusteringTransportationInfering(clf, points, dt_threshold=defaults.TM_DT_THRESHOLD):
     vels = map(lambda p: p.vel, points)
     # get changepoint indexes
@@ -150,6 +154,21 @@ class Classifier:
                 'value': classif
                 })
         return result
+
+    def learn(self, segment):
+        points = segment.points
+        for mode in segment.transportation_modes:
+            label = mode['label'].strip().lower()
+            fro = mode['from']
+            to = mode['to']
+            part = points[fro:to]
+            features = extractFeatures(part)
+
+            if label in self.classifiers.keys():
+                self.classifiers[label].fit([features], part)
+            else:
+                self.classifiers[label] = buildSoftClassifier([{ 'val': features, 'prob': 1 }])
+
 
     def save_to_file(self, filename):
         pickle.dump(self, filename)

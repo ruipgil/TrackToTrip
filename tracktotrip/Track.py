@@ -112,7 +112,7 @@ class Track:
         self.segments = newSegments
         return self
 
-    def simplify(self, topology_only=False, max_time=defaults.SIMPLIFY_MAX_TIME, max_distance=defaults.SIMPLIFY_MAX_DISTANCE):
+    def simplify(self, topology_only=False, dist_threshold=defaults.SIMPLIFY_DISTANCE_THRESHOLD):
         """In-place simplification of segments
 
         Args:
@@ -125,7 +125,7 @@ class Track:
             This track
         """
         for segment in self.segments:
-            segment.simplify(topology_only, max_time=max_time, max_distance=max_distance)
+            segment.simplify(topology_only, dist_threshold=dist_threshold)
         return self
 
     def inferTransportationMode(self, clf, removeStops=defaults.TM_REMOVE_STOPS, dt_threshold=defaults.TM_DT_THRESHOLD):
@@ -157,7 +157,7 @@ class Track:
         smooth_noise=defaults.SMOOTH_NOISE,
         seg_eps=0.15,
         seg_min_samples=80,
-        simplify_max_distance=0.01,
+        simplify_dist_threshold=defaults.SIMPLIFY_DISTANCE_THRESHOLD,
         simplify_max_time=5,
         file_format=DEFAULT_FILE_NAME_FORMAT
     ):
@@ -192,7 +192,7 @@ class Track:
         self.smooth(smooth_strategy, smooth_noise)
         self.segment(seg_eps, seg_min_samples)
         self.name = name
-        self.simplify(max_distance=simplify_max_distance, max_time=simplify_max_time)
+        self.simplify(dist_threshold=simplify_dist_threshold)
 
         return self
 

@@ -1,13 +1,15 @@
 from .Point import Point
 from smooth import smooth_segment
 from .noiseDetection import removeNoise
-from .simplify import simplify
+# from .simplify import simplify
+from td_compression import td_tr
 from .preprocess import preprocessSegment, MAX_ACC
 from .Location import inferLocation
 from .transportationMode import inferTransportationMode
 from .spatiotemporal_segmentation import spatiotemporal_segmentation
 from .drp import drp
 from .similarity import sortSegmentPoints
+
 import numpy as np
 from copy import deepcopy
 import defaults
@@ -118,7 +120,7 @@ class Segment:
         """
         return spatiotemporal_segmentation(self.points, eps, min_samples)
 
-    def simplify(self, topology_only=False, max_time=defaults.SIMPLIFY_MAX_TIME, max_distance=defaults.SIMPLIFY_MAX_DISTANCE, eps=defaults.SIMPLIFY_EPS):
+    def simplify(self, topology_only=False, dist_threshold=defaults.SIMPLIFY_DISTANCE_THRESHOLD, eps=defaults.SIMPLIFY_EPS):
         """In-place segment simplification
 
         Applies simplify function to points
@@ -135,7 +137,8 @@ class Segment:
         if topology_only:
             self.points = drp(self.points, eps)
         else:
-            self.points = simplify(self.points, max_distance, max_time)
+            print(dist_threshold)
+            self.points = td_tr(self.points, dist_threshold)
         return self
 
     def preprocess(self, destructive=True, maxAcc=MAX_ACC):
