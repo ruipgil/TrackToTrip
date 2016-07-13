@@ -39,7 +39,7 @@ class Classifier:
 
         for label in labels:
             result.append(label)
-        print(result)
+        # print(result)
         self.labels.fit(result)
 
     def learn(self, features, labels):

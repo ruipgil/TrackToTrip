@@ -36,6 +36,29 @@ def extractFeatures(points):
     vels = map(lambda p: p.vel, points)
     return np.mean(vels)
 
+def extract_features(points, ns=4):
+    MAX = 300
+    # inits histogram
+    histogram = [0] * MAX
+    # fills histogram
+    for point in points:
+        bin_index = int(round(point.vel))
+        histogram[bin_index] += point.dt
+
+    time = sum(histogram)
+    result = []
+
+    if time == 0:
+        return result
+
+    for _ in range(ns):
+        max_index = np.argmax(histogram)
+        value = histogram[max_index] / time
+        result.extend([max_index, value])
+        histogram[max_index] = -1
+
+    return result
+
 def speedClusteringTransportationInfering(clf, points, dt_threshold=defaults.TM_DT_THRESHOLD):
     vels = map(lambda p: p.vel, points)
     # get changepoint indexes
@@ -52,15 +75,19 @@ def speedClusteringTransportationInfering(clf, points, dt_threshold=defaults.TM_
 
         dt = points[toIndex].dt - points[fromIndex].dt
         sp = np.mean(vels[fromIndex:toIndex])
-        probs = clf.soft_classify_speed(sp)
+        features = extract_features(points)
+        [probs] = clf.predict(features, verbose=True)
+        top_label = sorted(probs.items(), key=lambda val: val[1])
+        print(features)
+        print(top_label)
 
         cp_info.append({
             'from': fromIndex,
             'to': toIndex,
             'dt': dt,
             'average_speed': sp,
-            'classification': map(lambda c: c['value'], probs),
-            'label': clf.choose_class(probs)
+            'classification': probs,
+            'label': top_label[-1][0]
             })
 
     # group based on label

@@ -2,7 +2,7 @@ from .Point import Point
 from smooth import smooth_segment
 from .noiseDetection import removeNoise
 # from .simplify import simplify
-from td_compression import td_tr
+from td_compression import td_tr, td_sp
 from .preprocess import preprocessSegment, MAX_ACC
 from .Location import inferLocation
 from .transportationMode import inferTransportationMode
@@ -137,8 +137,16 @@ class Segment:
         if topology_only:
             self.points = drp(self.points, eps)
         else:
-            print(dist_threshold)
-            self.points = td_tr(self.points, dist_threshold)
+            self.points = td_sp(self.points, dist_threshold)
+        return self
+
+    def compute_metrics(self):
+        prev = None
+        for point in self.points:
+            if prev is None:
+                prev = point
+            else:
+                point.computeMetrics(prev)
         return self
 
     def preprocess(self, destructive=True, maxAcc=MAX_ACC):

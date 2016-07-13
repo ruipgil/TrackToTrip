@@ -190,7 +190,7 @@ class Track:
         # self.removeNoise(noise_var)
 
         self.smooth(smooth_strategy, smooth_noise)
-        self.segment(seg_eps, seg_min_samples)
+        # self.segment(seg_eps, seg_min_samples)
         self.name = name
         self.simplify(dist_threshold=simplify_dist_threshold)
 
@@ -345,6 +345,11 @@ class Track:
 
         # print("fin", final_siml, final_diff)
         return np.mean(final_siml), final_diff
+
+    def compute_metrics(self):
+        for segment in self.segments:
+            segment.compute_metrics()
+        return self
 
     def toGPX(self):
         """Converts track to a GPX format
