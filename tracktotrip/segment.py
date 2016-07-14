@@ -3,7 +3,7 @@ from smooth import smooth_segment
 from .noiseDetection import removeNoise
 # from .simplify import simplify
 from td_compression import td_tr, td_sp
-from .preprocess import preprocessSegment, MAX_ACC
+from .preprocess import preprocessSegment
 from .Location import inferLocation
 from .transportationMode import inferTransportationMode
 from .spatiotemporal_segmentation import spatiotemporal_segmentation
@@ -149,7 +149,7 @@ class Segment:
                 point.computeMetrics(prev)
         return self
 
-    def preprocess(self, destructive=True, maxAcc=MAX_ACC):
+    def preprocess(self, destructive=True, maxAcc=defaults.PREPROCESS_MAX_ACC):
         """In-place segment preprocessing
 
         Applies preprocessSegment function to points

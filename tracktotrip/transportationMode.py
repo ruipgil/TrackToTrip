@@ -75,8 +75,8 @@ def speedClusteringTransportationInfering(clf, points, dt_threshold=defaults.TM_
 
         dt = points[toIndex].dt - points[fromIndex].dt
         sp = np.mean(vels[fromIndex:toIndex])
-        features = extract_features(points)
-        [probs] = clf.predict(features, verbose=True)
+        features = extract_features(points[fromIndex:toIndex])
+        [probs] = clf.predict([features], verbose=True)
         top_label = sorted(probs.items(), key=lambda val: val[1])
         print(features)
         print(top_label)
@@ -106,10 +106,7 @@ def speedClusteringTransportationInfering(clf, points, dt_threshold=defaults.TM_
     previous['to'] = cp_info[-1]['to']
     grouped.append(previous)
 
-
-    # for g in grouped:
-    #     print(g['label'], g['dt'], g['from'], g['to'])
-
+    # grouped = cp_info
     return grouped
 
 # def applyTransitionProbability(previous, current):

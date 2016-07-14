@@ -21,7 +21,7 @@ def changepoint(data):
     mean = np.mean(stat_s)
     print(mean, var)
 
-    up_threshold = mean + var
+    up_threshold = mean + var * 2
     for i, d in enumerate(s):
         if d >= up_threshold:
             changepoints.append(i)

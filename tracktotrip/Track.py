@@ -1,7 +1,6 @@
 import gpxpy
 from os.path import basename
 from .segment import Segment
-from .preprocess import MAX_ACC
 from copy import deepcopy
 from similarity import segment_similarity
 from rtree import index
@@ -190,13 +189,13 @@ class Track:
         # self.removeNoise(noise_var)
 
         self.smooth(smooth_strategy, smooth_noise)
-        # self.segment(seg_eps, seg_min_samples)
+        self.segment(seg_eps, seg_min_samples)
         self.name = name
         self.simplify(dist_threshold=simplify_dist_threshold)
 
         return self
 
-    def preprocess(self, destructive=True, max_acc=MAX_ACC):
+    def preprocess(self, destructive=True, max_acc=defaults.PREPROCESS_MAX_ACC):
         """In-place preprocessing of segments
 
         Args:

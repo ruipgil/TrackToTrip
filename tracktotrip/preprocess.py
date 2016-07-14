@@ -1,10 +1,10 @@
 from .Point import Point
 import datetime
+import defaults
 
-MAX_ACC = 30.2
 MIN_TIME = datetime.datetime(1999, 1, 1)
 
-def preprocessSegment(arrayOfPoints, destructive=True, accessor=Point.accessor, maxAcc=MAX_ACC):
+def preprocessSegment(arrayOfPoints, destructive=True, accessor=Point.accessor, maxAcc=defaults.PREPROCESS_MAX_ACC):
     """Calculates the metrics of points
 
     Uses their ordering to calculate velocities and

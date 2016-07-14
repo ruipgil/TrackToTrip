@@ -22,7 +22,7 @@ class Classifier:
         learned (bool): True if there is something learned
     """
     def __init__(self):
-        self.clf = SGDClassifier(loss="log", penalty="l1", shuffle=False)
+        self.clf = SGDClassifier(loss="log", penalty="l1", shuffle=True)
         self.labels = preprocessing.LabelEncoder()
         self.learned = False
 
