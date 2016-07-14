@@ -44,6 +44,10 @@ def spatiotemporal_segmentation(points, eps=0.15, min_samples=80):
         if l != -1:
             p[l].append(points[i])
 
+    for seg in segments:
+        print(len(seg))
+    segments = filter(lambda points: len(points) > 1, segments)
+
     # for i, w in enumerate(p):
         # print("Cluster! " + str(i))
         # print(w[0])

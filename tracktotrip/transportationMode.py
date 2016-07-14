@@ -63,8 +63,15 @@ def speedClusteringTransportationInfering(clf, points, dt_threshold=defaults.TM_
     vels = map(lambda p: p.vel, points)
     # get changepoint indexes
     cp = changepoint(vels)
+
+    # Doesn't have change points
+    if len(cp) == 0:
+        cp.append(0)
+
     # insert last point to be a change point
     cp.append(len(points) - 1)
+
+    print("change points %d for %d" % (len(cp), len(points)))
 
     # info for each changepoint
     cp_info = []
@@ -73,22 +80,25 @@ def speedClusteringTransportationInfering(clf, points, dt_threshold=defaults.TM_
         fromIndex = cp[i]
         toIndex = cp[i+1]
 
+        print('cp', i, fromIndex, toIndex)
+
         dt = points[toIndex].dt - points[fromIndex].dt
         sp = np.mean(vels[fromIndex:toIndex])
         features = extract_features(points[fromIndex:toIndex])
-        [probs] = clf.predict([features], verbose=True)
-        top_label = sorted(probs.items(), key=lambda val: val[1])
-        print(features)
-        print(top_label)
+        if len(features) > 0:
+            [probs] = clf.predict([features], verbose=True)
+            top_label = sorted(probs.items(), key=lambda val: val[1])
+            # print(features)
+            # print(top_label)
 
-        cp_info.append({
-            'from': fromIndex,
-            'to': toIndex,
-            'dt': dt,
-            'average_speed': sp,
-            'classification': probs,
-            'label': top_label[-1][0]
-            })
+            cp_info.append({
+                'from': fromIndex,
+                'to': toIndex,
+                'dt': dt,
+                'average_speed': sp,
+                'classification': probs,
+                'label': top_label[-1][0]
+                })
 
     # group based on label
     previous = cp_info[0]

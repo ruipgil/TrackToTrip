@@ -189,9 +189,14 @@ class Track:
         # self.removeNoise(noise_var)
 
         self.smooth(smooth_strategy, smooth_noise)
+        self.compute_metrics()
+
         self.segment(seg_eps, seg_min_samples)
+        self.compute_metrics()
+
         self.name = name
         self.simplify(dist_threshold=simplify_dist_threshold)
+        self.compute_metrics()
 
         return self
 
