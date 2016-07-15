@@ -76,8 +76,8 @@ def spatiotemporal_segmentation(points, eps, min_time):
 
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 
-    segments = [[] for o in range(n_clusters_+1)]
-    clusters = [[] for o in range(n_clusters_+1)]
+    segments = [[] for _ in range(n_clusters_+1)]
+    clusters = [[] for _ in range(n_clusters_+1)]
     current_segment = 0
 
     # split segments identified with dbscan

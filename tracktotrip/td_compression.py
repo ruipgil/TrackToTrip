@@ -23,7 +23,7 @@ def time_dist(end, start):
     Returns:
         float, time difference in seconds
     """
-    return end.timeDifference(start)
+    return end.time_difference(start)
 
 def td_sp(points, speed_threshold):
     """ Top-Down Speed-Based Trajectory Compression Algorithm

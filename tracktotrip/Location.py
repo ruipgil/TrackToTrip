@@ -116,7 +116,7 @@ class Location:
     def toJSON(self):
         return {
             'label': self.label,
-            'position': self.centroid.toJSON(),
+            'position': self.centroid.to_json(),
             'other': self.other
         }
 

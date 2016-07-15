@@ -1,3 +1,5 @@
+import datetime
+
 PRECISION_PERSON = 4
 
 # based on
@@ -21,3 +23,17 @@ def estimate_meters_to_deg(meters, precision=5):
     line = PRECISION_TABLE[precision]
     dec = 1/float(10 ** precision)
     return meters / line[3] * dec
+
+def isostr_to_datetime(dt_str):
+    """ Converts iso formated text string into a datetime object
+
+    Args:
+        dt_str (str): ISO formated text string
+    Returns:
+        :obj:`datetime.datetime`
+    """
+    delta_t, _, us_m = dt_str.partition(".")
+    delta_t = datetime.datetime.strptime(delta_t, "%Y-%m-%dT%H:%M:%S")
+    us_m = int(us_m.rstrip("Z"), 10)
+    return delta_t + datetime.timedelta(microseconds=us_m)
+

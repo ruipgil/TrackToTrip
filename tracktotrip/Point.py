@@ -1,68 +1,65 @@
+"""
+Point class
+"""
 import math
 import datetime
+from utils import isostr_to_datetime
 
-epoch = datetime.datetime.utcfromtimestamp(0)
+EPOCH = datetime.datetime.utcfromtimestamp(0)
 
 class Point:
-    """Point position representation
+    """ Spaciotemporal point representation
 
     Attributes:
-        index: original index of point in segment
-        lat: number, latitude
-        lon: number, longitude
-        time: datetime instance
-        dt: time difference in seconds from the past point in the segment
+        lat (float): latitude
+        lon (float): longitude
+        time (:obj:`datetime.datetime`): time
+        dt (float): time difference in seconds from the past point in the segment
             should be computed
-        acc: float, accelaration in km^2/h, relative to the previous point in the segment
-            should be computed with computeMetrics method
-        vel: float, velocity in km/h, relative to the previous point in the segment
-            should be computed with computeMetrics method
+        acc (float): accelaration in km^2/h, relative to the previous point in the segment
+            should be computed with compute_metrics method
+        vel (float): velocity in km/h, relative to the previous point in the segment
+            should be computed with compute_metrics method
     """
-    def __init__(self, index, lat, lon, time, dt=0, acc=0.0, vel=0.0):
-        self.index = index
+    def __init__(self, lat, lon, time):
         self.lon = lon
         self.lat = lat
         self.time = time
-        self.dt = dt
-        self.acc = acc
-        self.vel = vel
+        self.dt = .0 #pylint: disable=invalid-name
+        self.acc = .0
+        self.vel = .0
 
-    def getTimestamp(self):
-        """Gets the timestamp of this point's time,
-        seconds since 1970
+    def get_timestamp(self):
+        """ Gets the timestamp of this point's time, seconds since 1970
 
         Returns:
-            Float
+            float: time since epoch, in seconds
         """
-        return (self.time - epoch).total_seconds()
+        return (self.time - EPOCH).total_seconds()
 
     def gen2arr(self):
-        """Generate a location array
+        """ Generate a location array
 
         Returns:
-            Array with longitude and latitude
+            :obj:`list` of float: List with longitude and latitude
         """
         return [self.lon, self.lat]
 
     def gen3arr(self):
-        """Generate a time-location array
+        """ Generate a time-location array
 
         Returns:
-            Array with longitude, latitude and datetime instance
+            :obj:`list` of float: List with longitude, latitude and timestamp
         """
-        return [self.lon, self.lat, self.getTimestamp()]
-
-    @staticmethod
-    def trackToArr2(track):
-        return map(mapHelper, track)
+        return [self.lon, self.lat, self.get_timestamp()]
 
     def distance(self, other):
-        """Distance between this and another Point
+        """ Distance between points
 
         Args:
-            other: Point instance
+            other (:obj:`Point`)
         Returns:
-            Distance, float, between the two points in km
+            float: Distance in km
         """
         return distance(self.lat, self.lon, None, other.lat, other.lon, None)
 
@@ -70,92 +67,108 @@ class Point:
         """ Calcultes the time difference against another point
 
         Args:
-            previous (:obj:`Point`): Point to calculate the difference
+            previous (:obj:`Point`): Point before
         Returns:
             Time difference in seconds
         """
         return abs((self.time - previous.time).total_seconds())
 
-    def timeDifference(self, previous):
-        """Calculates the time difference between two points
+    def compute_metrics(self, previous):
+        """ Computes the metrics of this point
+
+        Computes and updates the dt, vel and acc attributes.
 
         Args:
-            previous: Point instance
+            previous (:obj:`Point`): Point before
         Returns:
-            Time difference, float, between the two points in seconds.
-            May be positive if the other point occured before, negative
-            otherwise.
+            :obj:`Point`: Self
         """
-        return abs(self.getTimestamp() - previous.getTimestamp())
-
-    def computeMetrics(self, previous):
-        """Computes the metrics of this point
-
-        Computes and updates the dt, vel and acc class attributes.
-
-        Args:
-            previous: Point instance, that occured before
-        Returns:
-            This Point instance
-        """
-        dt = self.timeDifference(previous)
+        delta_t = self.time_difference(previous)
         vel = 0
-        dv = 0
+        delta_v = 0
         acc = 0
-        if dt != 0 :
-            vel = self.distance(previous)/dt
-            dv = vel - previous.vel
-            acc = dv/dt
+        if delta_t != 0:
+            vel = self.distance(previous)/delta_t
+            delta_v = vel - previous.vel
+            acc = delta_v/delta_t
 
-        self.dt = dt
+        self.dt = delta_t
         self.acc = acc
         self.vel = vel
         return self
 
     @staticmethod
-    def fromGPX(gpxTrackPoint, i=0):
-        """Creates a Point from GPX representation
+    def from_gpx(gpx_track_point):
+        """ Creates a point from GPX representation
 
         Arguments:
-            gpxTrackPoint: gpxpy.GPXTrackPoint instance
+            gpx_track_point (:obj:`gpxpy.GPXTrackPoint`)
         Returns:
-            Point instance
+            :obj:`Point`
         """
-        return Point(i, lat=gpxTrackPoint.latitude, lon=gpxTrackPoint.longitude, time=gpxTrackPoint.time)
+        return Point(
+            lat=gpx_track_point.latitude,
+            lon=gpx_track_point.longitude,
+            time=gpx_track_point.time
+        )
 
-    def toJSON(self):
-        """Creates a JSON serializable representation of this Point
+    def to_json(self):
+        """ Creates a JSON serializable representation of this instance
 
         Returns:
-            Map with keys: lat, lon (both floats) and time (string, in ISO format)
+            :obj:`dict`: For example,
+                {
+                    "lat": 9.3470298,
+                    "lon": 3.79274,
+                    "time": "2016-07-15T15:27:53.574110"
+                }
         """
         return {
-                'lat': self.lat,
-                'lon': self.lon,
-                'time': self.time.isoformat()
-                }
+            'lat': self.lat,
+            'lon': self.lon,
+            'time': self.time.isoformat()
+        }
 
     @staticmethod
-    def fromJSON(json, i=0):
-        """Creates Point instance from JSON representation
+    def from_json(json):
+        """ Creates Point instance from JSON representation
 
         Args:
+            json (:obj:`dict`): Must have at least the following keys: lat (float), lon (float),
+                time (string in iso format). Example,
+                {
+                    "lat": 9.3470298,
+                    "lon": 3.79274,
+                    "time": "2016-07-15T15:27:53.574110"
+                }
             json: map representation of Point instance
         Returns:
-            Point instance
+            :obj:`Point`
         """
-        return Point(i, lat=json['lat'], lon=json['lon'], time=gt(json['time']))
+        return Point(
+            lat=json['lat'],
+            lon=json['lon'],
+            time=isostr_to_datetime(json['time'])
+        )
 
     @staticmethod
     def accessor(point):
+        """ Auxiliary function to map attributes to 3-tuple
+
+        Args:
+            point (:obj:`Point`)
+        Returns:
+            Tuple with lat, lon and time
+        """
         return point.lat, point.lon, point.time
 
 
 ONE_DEGREE = 1000. * 10000.8 / 90.
 EARTH_RADIUS = 6371 * 1000
 
-def to_rad(x):
-    return x / 180. * math.pi
+def to_rad(number):
+    """ Degrees to rads """
+    return number / 180. * math.pi
 
 def haversine_distance(latitude_1, longitude_1, latitude_2, longitude_2):
     """
@@ -167,6 +180,7 @@ def haversine_distance(latitude_1, longitude_1, latitude_2, longitude_2):
     lat1 = to_rad(latitude_1)
     lat2 = to_rad(latitude_2)
 
+    #pylint: disable=invalid-name
     a = math.sin(d_lat/2) * math.sin(d_lat/2) + \
         math.sin(d_lon/2) * math.sin(d_lon/2) * math.cos(lat1) * math.cos(lat2)
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
@@ -174,14 +188,17 @@ def haversine_distance(latitude_1, longitude_1, latitude_2, longitude_2):
 
     return d
 
+#pylint: disable=too-many-arguments
 def distance(latitude_1, longitude_1, elevation_1, latitude_2, longitude_2, elevation_2,
              haversine=None):
+    """ Distance between two points """
 
     # If points too distant -- compute haversine distance:
     if haversine or (abs(latitude_1 - latitude_2) > .2 or abs(longitude_1 - longitude_2) > .2):
         return haversine_distance(latitude_1, longitude_1, latitude_2, longitude_2)
 
     coef = math.cos(latitude_1 / 180. * math.pi)
+    #pylint: disable=invalid-name
     x = latitude_1 - latitude_2
     y = (longitude_1 - longitude_2) * coef
 
@@ -191,16 +208,4 @@ def distance(latitude_1, longitude_1, elevation_1, latitude_2, longitude_2, elev
         return distance_2d
 
     return math.sqrt(distance_2d ** 2 + (elevation_1 - elevation_2) ** 2)
-
-def mapHelper(p):
-    if p == None:
-        return None
-    else:
-        p.gen2arr()
-
-def gt(dt_str):
-    dt, _, us= dt_str.partition(".")
-    dt= datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
-    us= int(us.rstrip("Z"), 10)
-    return dt + datetime.timedelta(microseconds=us)
 

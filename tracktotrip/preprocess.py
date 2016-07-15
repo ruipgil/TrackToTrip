@@ -32,14 +32,14 @@ def preprocessSegment(arrayOfPoints, destructive=True, accessor=Point.accessor, 
     for pi, point in enumerate(arrayOfPoints):
         if not shouldRemoveEpoch(point, destructive):
             plat, plon, ptime = accessor(point)
-            thisPoint = Point(pi, lat=plat, lon=plon, time=ptime)
+            thisPoint = Point(lat=plat, lon=plon, time=ptime)
 
             if lastPoint != None:
-                thisPoint.computeMetrics(lastPoint)
+                thisPoint.compute_metrics(lastPoint)
 
             if destructive and abs(thisPoint.acc) > maxAcc:
-                thisPoint = Point(pi, lat=lastPoint.lat, lon=lastPoint.lon, time=ptime)
-                thisPoint.computeMetrics(lastPoint)
+                thisPoint = Point(lat=lastPoint.lat, lon=lastPoint.lon, time=ptime)
+                thisPoint.compute_metrics(lastPoint)
                 skipped.append((thisPoint, thisPoint.acc))
 
             result.append(thisPoint)

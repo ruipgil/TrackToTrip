@@ -146,7 +146,7 @@ class Segment:
             if prev is None:
                 prev = point
             else:
-                point.computeMetrics(prev)
+                point.compute_metrics(prev)
                 prev = point
         return self
 
@@ -161,17 +161,17 @@ class Segment:
         Returns:
             This segment
         """
-        points, skipped = preprocessSegment(self.points, destructive=destructive, maxAcc=maxAcc)
+        points, _ = preprocessSegment(self.points, destructive=destructive, maxAcc=maxAcc)
         self.points = points
         return self
 
     def inferLocation(
-        self,
-        location_query,
-        max_distance=defaults.LOCATION_MAX_DISTANCE,
-        google_key='',
-        limit=defaults.LOCATIONS_LIMIT
-    ):
+            self,
+            location_query,
+            max_distance=defaults.LOCATION_MAX_DISTANCE,
+            google_key='',
+            limit=defaults.LOCATIONS_LIMIT
+        ):
         """In-place location inferring
 
         Applies inferLocation function to points
@@ -273,7 +273,7 @@ class Segment:
                 and to)and segments of the segment.
         """
         return {
-                'points': map(lambda point: point.toJSON(), self.points),
+                'points': map(lambda point: point.to_json(), self.points),
                 'transportationModes': self.transportation_modes,
                 'locationFrom': self.location_from.toJSON() if self.location_from != None else None,
                 'locationTo': self.location_to.toJSON() if self.location_to != None else None
@@ -300,7 +300,7 @@ class Segment:
         """
         points = []
         for i, point in enumerate(gpxSegment.points):
-            points.append(Point.fromGPX(point, i))
+            points.append(Point.from_gpx(point))
         return Segment(points)
 
     @staticmethod
@@ -318,6 +318,6 @@ class Segment:
         # FIXME
         points = []
         for i, point in enumerate(json['points']):
-            points.append(Point.fromJSON(point, i))
+            points.append(Point.from_json(point))
         return Segment(points)
 
