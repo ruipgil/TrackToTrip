@@ -94,7 +94,7 @@ class Track:
             segment.smooth(strategy=strategy, noise=noise)
         return self
 
-    def segment(self, eps=defaults.SEGMENT_EPS, min_samples=defaults.SEGMENT_MIN_SAMPLES):
+    def segment(self, eps=defaults.SEGMENT_EPS, min_time=defaults.SEGMENT_MIN_TIME):
         """In-place segmentation of segments
 
         Spatio-temporal segmentation of each segment
@@ -105,7 +105,7 @@ class Track:
         """
         newSegments = []
         for segment in self.segments:
-            s = segment.segment()
+            s = segment.segment(eps=eps, min_time=min_time)
             for a in s:
                 newSegments.append(Segment(a))
         self.segments = newSegments
@@ -154,8 +154,8 @@ class Track:
         noise_var=2,
         smooth_strategy='inverse',
         smooth_noise=defaults.SMOOTH_NOISE,
-        seg_eps=0.15,
-        seg_min_samples=80,
+        seg_eps=defaults.SEGMENT_EPS,
+        seg_min_time=defaults.SEGMENT_MIN_TIME,
         simplify_dist_threshold=defaults.SIMPLIFY_DISTANCE_THRESHOLD,
         simplify_max_time=5,
         file_format=DEFAULT_FILE_NAME_FORMAT
@@ -189,14 +189,15 @@ class Track:
         # self.removeNoise(noise_var)
 
         self.smooth(smooth_strategy, smooth_noise)
-        self.compute_metrics()
 
-        self.segment(seg_eps, seg_min_samples)
         self.compute_metrics()
+        self.segment(seg_eps, seg_min_time)
 
-        self.name = name
+        self.compute_metrics()
         self.simplify(dist_threshold=simplify_dist_threshold)
+
         self.compute_metrics()
+        self.name = name
 
         return self
 

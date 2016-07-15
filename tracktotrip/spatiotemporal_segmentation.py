@@ -1,61 +1,95 @@
+"""
+Spatio-temporal segmentation of points
+"""
+import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 
-def spatiotemporal_segmentation(points, eps=0.15, min_samples=80):
-    """
-    Makes spatiotemporal checks to see if two or more tracks are
-    recorded in the current one
+def correct_segmentation(segments, clusters, min_time):
+    """ Corrects the predicted segmentation
 
-    Returns segmented
+    This process prevents over segmentation
+
+    Args:
+        segments (:obj:`list` of :obj:`list` of :obj:`Point`):
+            segments to correct
+        min_time (int): minimum required time for segmentation
     """
-    X = map(lambda p: p.gen3arr(), points)
-    X = StandardScaler().fit_transform(X)
-    # eps=0.15,min_samples=80
-    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
-    labels = db.labels_
+    segments = [points for points in segments if len(points) > 1]
+
+    result_segments = []
+    prev_segment = None
+    print(len(segments))
+    for i, segment in enumerate(segments):
+        cluster = clusters[i]
+        if prev_segment is None:
+            prev_segment = segment
+        else:
+            cluster_dt = 0
+            if len(cluster) > 0:
+                cluster_dt = abs(cluster[0].time_difference(cluster[-1]))
+            print(i, cluster_dt, cluster_dt <= min_time)
+            if cluster_dt <= min_time:
+                prev_segment.extend(segment)
+            else:
+                prev_segment.append(segment[0])
+                result_segments.append(prev_segment)
+                prev_segment = segment
+    if prev_segment is not None:
+        result_segments.append(prev_segment)
+
+    return result_segments
+
+def spatiotemporal_segmentation(points, eps, min_time):
+    """ Splits a set of points into multiple sets of points based on
+        spatio-temporal stays
+
+    DBSCAN is used to predict possible segmentations,
+        furthermore we check to see if each clusters is big enough in
+        time (>=min_time). If that's the case than the segmentation is
+        considered valid.
+
+    When segmenting, the last point of the ith segment will be the same
+        of the (i-1)th segment.
+
+    Segments are identified through clusters.
+    The last point of a clusters, that comes after a sub-segment A, will
+        be present on the sub-segment A.
+
+    Args:
+        points (:obj:`list` of :obj:`Point`): segment's points
+        eps (float): Epsilon to feed to the DBSCAN algorithm.
+            Maximum distance between two samples, to be considered in
+            the same cluster.
+        min_time (float): Minimum time of a stay
+    Returns:
+        :obj:`list` of :obj:`list` of :obj:`Point`: Initial set of
+            points in different segments
+    """
+    sample_rate = np.average([point.dt for point in points])
+    min_samples = min_time / sample_rate
+
+    data = [point.gen3arr() for point in points]
+    data = StandardScaler().fit_transform(data)
+    db_cluster = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
+    labels = db_cluster.labels_
 
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 
     segments = [[] for o in range(n_clusters_+1)]
     clusters = [[] for o in range(n_clusters_+1)]
-    currentSegment = 0
+    current_segment = 0
+
+    # split segments identified with dbscan
     for i, label in enumerate(labels):
-        if label != -1 and label + 1 != currentSegment:
-            currentSegment = label + 1
+        if label != -1 and label + 1 != current_segment:
+            current_segment = label + 1
         point = points[i]
-        segments[currentSegment].append(point)
+        segments[current_segment].append(point)
         if label == -1:
-            None
+            pass
         else:
             clusters[label + 1].append(point)
 
-    # for si, segment in enumerate(segments):
-        # if (len(segments) - 1) > si:
-            # print(len(segments), si)
-            # print(segments[si + 1][0].toJSON())
-            # #segment.append(segments[si + 1][0])
-
-    """print(map(lambda s: len(s), segments))
-    for s in segments:
-        print(str(s[0]) + str(s[-1]))"""
-
-    p = [[] for o in range(n_clusters_)]
-    for i, l in enumerate(labels):
-        if l != -1:
-            p[l].append(points[i])
-
-    for seg in segments:
-        print(len(seg))
-    segments = filter(lambda points: len(points) > 1, segments)
-
-    # for i, w in enumerate(p):
-        # print("Cluster! " + str(i))
-        # print(w[0])
-        # print(w[-1])
-        # #centroid = Point(-1, np.mean(map(lambda p: p.getLon(), w)), np.mean(map(lambda p: p.getLat(), w)), w[-1].getTime())
-        # centroid = w[-1]
-        # #segments[i].append(centroid)
-
-    # print(len(segments))
-    return segments
+    return correct_segmentation(segments, clusters, min_time)
 

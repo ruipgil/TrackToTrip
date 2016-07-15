@@ -37,17 +37,22 @@ def extractFeatures(points):
     return np.mean(vels)
 
 def extract_features(points, ns=4):
-    MAX = 300
+    max_bin = -1
+    for point in points:
+        max_bin = max(max_bin, point.vel)
+    max_bin = int(round(max_bin)) + 1
+
     # inits histogram
-    histogram = [0] * MAX
+    histogram = [0] * max_bin
+    time = 0
+
     # fills histogram
     for point in points:
         bin_index = int(round(point.vel))
         histogram[bin_index] += point.dt
+        time += point.dt
 
-    time = sum(histogram)
     result = []
-
     if time == 0:
         return result
 

@@ -66,6 +66,16 @@ class Point:
         """
         return distance(self.lat, self.lon, None, other.lat, other.lon, None)
 
+    def time_difference(self, previous):
+        """ Calcultes the time difference against another point
+
+        Args:
+            previous (:obj:`Point`): Point to calculate the difference
+        Returns:
+            Time difference in seconds
+        """
+        return abs((self.time - previous.time).total_seconds())
+
     def timeDifference(self, previous):
         """Calculates the time difference between two points
 

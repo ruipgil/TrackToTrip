@@ -109,7 +109,7 @@ class Segment:
         self.points = smooth_segment(self.points, strategy=strategy, noise=noise)
         return self
 
-    def segment(self, eps=defaults.SEGMENT_EPS, min_samples=defaults.SEGMENT_MIN_SAMPLES):
+    def segment(self, eps=defaults.SEGMENT_EPS, min_time=defaults.SEGMENT_MIN_TIME):
         """Spatio-temporal segmentation
 
         Applies segmentSegment function to points,
@@ -118,7 +118,7 @@ class Segment:
         Returns:
             An array of arrays of points
         """
-        return spatiotemporal_segmentation(self.points, eps, min_samples)
+        return spatiotemporal_segmentation(self.points, eps, min_time)
 
     def simplify(self, topology_only=False, dist_threshold=defaults.SIMPLIFY_DISTANCE_THRESHOLD, eps=defaults.SIMPLIFY_EPS):
         """In-place segment simplification
@@ -147,6 +147,7 @@ class Segment:
                 prev = point
             else:
                 point.computeMetrics(prev)
+                prev = point
         return self
 
     def preprocess(self, destructive=True, maxAcc=defaults.PREPROCESS_MAX_ACC):
