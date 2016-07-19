@@ -1,56 +1,89 @@
-import defaults
-import requests
-from sklearn.cluster import DBSCAN
-import numpy as np
-from utils import estimate_meters_to_deg
+"""
+Location class and methods
+"""
 from math import sqrt
+import requests
+import numpy as np
+from sklearn.cluster import DBSCAN
+from .utils import estimate_meters_to_deg
 
 
 GOOGLE_PLACES_URL = 'https://maps.googleapis.com/maps/api/place/nearbysearch' \
     '/json?location=%s,%s&radius=%s&key=%s'
 
-def computeCentroid(points):
-    xs = map(lambda p: p[0], points)
-    ys = map(lambda p: p[1], points)
-    centroid = [np.mean(xs), np.mean(ys)]
-    return centroid
+def compute_centroid(points):
+    """ Computes the centroid of set of points
 
-def updateLocationCentroid(point, cluster, max_distance=defaults.LOCATION_MAX_DISTANCE, min_samples=2):
-    X = map(lambda p: p.gen2arr(), cluster)
-    X.append(point.gen2arr())
+    Args:
+        points (:obj:`list` of [float, float])
+    Returns:
+        [float, float]: Latitude and longitude of the centroid
+    """
+    lats = [p[0] for p in points]
+    lons = [p[1] for p in points]
+    return [np.mean(lats), np.mean(lons)]
 
+def update_location_centroid(point, cluster, max_distance, min_samples):
+    """ Updates the centroid of a location cluster with another point
+
+    Args:
+        point (:obj:`Point`): Point to add to the cluster
+        cluster (:obj:`list` of :obj:`Point`): Location cluster
+        max_distance (float): Max neighbour distance
+        min_samples (int): Minimum number of samples
+    Returns:
+        ([float, float], :obj:`list` of :obj:`Point`): Tuple with the location centroid
+            and new point cluster (given cluster + given point)
+    """
+    points = [p.gen2arr() for p in cluster]
+    points.append(point.gen2arr())
+
+    # Estimates the epsilon
     eps = estimate_meters_to_deg(sqrt(max_distance), precision=5)
 
-    km = DBSCAN(eps=eps, min_samples=min_samples)
-    km.fit(X)
+    p_cluster = DBSCAN(eps=eps, min_samples=min_samples)
+    p_cluster.fit(points)
 
     clusters = {}
-    for i in range(len(X)):
-        label = km.labels_[i]
+    for i, label in enumerate(p_cluster.labels_):
         if label in clusters.keys():
-            clusters[label].append(X[i])
+            clusters[label].append(points[i])
         else:
-            clusters[label] = [X[i]]
+            clusters[label] = [points[i]]
 
     centroids = []
     biggest_centroid_l = -float("inf")
-    biggestCentroid=None
+    biggest_centroid = None
 
     for label, cluster in clusters.items():
-        centroid = computeCentroid(cluster)
+        centroid = compute_centroid(cluster)
         centroids.append(centroid)
 
         if label >= 0 and len(cluster) >= biggest_centroid_l:
             biggest_centroid_l = len(cluster)
-            biggestCentroid = centroid
+            biggest_centroid = centroid
 
-    if biggestCentroid is None:
-        biggestCentroid = computeCentroid(X)
+    if biggest_centroid is None:
+        biggest_centroid = compute_centroid(points)
 
-    return biggestCentroid, X
+    return biggest_centroid, points
 
 
 def query_google(point, max_distance, key):
+    """ Queries google maps API for a location
+
+    Args:
+        point (:obj:`Point`): Point location to query
+        max_distance (float): Search radius, in meters
+        key (str): Valid google maps api key
+    Returns:
+        :obj:`list` of :obj:`dict`: List of locations with the following format:
+            {
+                'label': 'Coffee house',
+                'types': 'Commerce',
+                'suggestion_type': 'GOOGLE'
+            }
+    """
     if not key:
         return []
 
@@ -66,22 +99,28 @@ def query_google(point, max_distance, key):
     response = req.json()
     results = response['results']
     # l = len(results)
-    return map(lambda (i, r): {
-        'label': r['name'],
-        # 'rank': (l-i)/float(l),
-        # 'vinicity': r['vinicity'] if 'vicinity' in r else '',
-        'types': r['types'],
-        'suggestion_type': 'GOOGLE'}, enumerate(results))
+    final_results = []
+    for local in results:
+        final_results.append({
+            'label': local['name'],
+            # 'rank': (l-i)/float(l),
+            'types': local['types'],
+            'suggestion_type': 'GOOGLE'
+            })
+    return final_results
 
+def infer_location(point, location_query, max_distance, google_key, limit):
+    """ Infers the semantic location of a (point) place.
 
-def inferLocation(
-    point,
-    location_query,
-    max_distance=defaults.LOCATION_MAX_DISTANCE,
-    google_key='',
-    limit=defaults.LOCATIONS_LIMIT
-):
-
+    Args:
+        points (:obj:`Point`): Point location to infer
+        location_query: Function with signature, (:obj:`Point`, int) -> (str, :obj:`Point`, ...)
+        max_distance (float): Max distance to a position, in meters
+        google_key (str): Valid google maps api key
+        limit (int): Results limit
+    Returns:
+        :obj:`Location`: with top match, and alternatives
+    """
     locations = []
 
     if location_query is not None:
@@ -104,16 +143,35 @@ def inferLocation(
     return Location(locations[0]['label'], point, locations)
 
 
-class Location:
-    def __init__(self, label, position, other=[]):
+class Location(object):
+    """ Location representation
+
+    Params:
+        label (str): Location name
+        centroid (:obj:`Point`): Location position
+        other (:obj:`list` of :obj:`dict`): Other possible locations. Includes the current label
+    """
+    def __init__(self, label, position, other):
         self.label = label
         self.centroid = position
         self.other = other
 
     def distance(self, position):
+        """ Computes the distance between centroid and another point
+
+        Args:
+            position (:obj:`Point`)
+        Returns:
+            float: distance, in meters
+        """
         return self.centroid.distance(position)
 
-    def toJSON(self):
+    def to_json(self):
+        """ Converts to a json representation
+
+        Returns:
+            :obj:`dict`
+        """
         return {
             'label': self.label,
             'position': self.centroid.to_json(),
@@ -121,5 +179,10 @@ class Location:
         }
 
     @staticmethod
-    def fromJSON(json):
-        return Location(json['label'], json['position'])
+    def from_json(json):
+        """ Converts from a json representation
+
+        Returns:
+            :obj:`Location`
+        """
+        return Location(json['label'], json['position'], [])

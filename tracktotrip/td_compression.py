@@ -1,7 +1,7 @@
 """
 Time-distance compression algorithms
 """
-from Point import Point
+from .point import Point
 
 def loc_dist(end, start):
     """ Spatial distance between two points (end-start)
@@ -49,9 +49,9 @@ def td_sp(points, speed_threshold):
             dt2 = time_dist(points[i+1], points[i])
             if dt2 == 0:
                 dt2 = 0.000000001
-            vi = loc_dist(points[i+1], points[i]) / dt2
-            if abs(vi - vim) > max_speed_threshold:
-                max_speed_threshold = abs(vi - vim)
+            vi_ = loc_dist(points[i+1], points[i]) / dt2
+            if abs(vi_ - vim) > max_speed_threshold:
+                max_speed_threshold = abs(vi_ - vim)
                 found_index = i
         if max_speed_threshold > speed_threshold:
             one = td_sp(points[:found_index], speed_threshold)
@@ -86,7 +86,6 @@ def td_tr(points, dist_threshold):
 
             di_de = delta_i / delta_e
             point = Point(
-                0,
                 points[0].lat + d_lat * di_de,
                 points[0].lon + d_lon * di_de,
                 None
@@ -104,4 +103,3 @@ def td_tr(points, dist_threshold):
             return one
         else:
             return [points[0], points[-1]]
-

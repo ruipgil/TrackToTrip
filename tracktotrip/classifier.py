@@ -11,7 +11,7 @@ from sklearn.linear_model import SGDClassifier
 # import matplotlib.pyplot as plt
 
 
-class Classifier:
+class Classifier(object):
     """ Transportation mode classifier
 
     This is a wrapper around sklearn SGDClassifier, to simplify it's usage
@@ -19,12 +19,12 @@ class Classifier:
     Attributes:
         clf (:obj:`SGDClassifier`): Classifier being used
         labels (:obj:`LabelEncoder`): Label encoder, includes all the labels
-        learned (bool): True if there is something learned
+        feature_length (int): Length of each feature. <0 if it hasn't learned any
     """
     def __init__(self):
         self.clf = SGDClassifier(loss="log", penalty="l1", shuffle=True)
         self.labels = preprocessing.LabelEncoder()
-        self.learned = False
+        self.feature_length = -1
 
     def __learn_labels(self, labels):
         """ Learns new labels, this method is intended for internal use
@@ -32,14 +32,13 @@ class Classifier:
         Args:
             labels (:obj:`list` of :obj:`str`): Labels to learn
         """
-        if self.learned:
+        if self.feature_length > 0:
             result = list(self.labels.classes_)
         else:
             result = []
 
         for label in labels:
             result.append(label)
-        # print(result)
         self.labels.fit(result)
 
     def learn(self, features, labels):
@@ -56,11 +55,12 @@ class Classifier:
         """
         self.__learn_labels(labels)
         labels = self.labels.transform(labels)
-        if self.learned:
+        if self.feature_length > 0:
+            # FIXME? check docs, may need to pass class=[...]
             self.clf = self.clf.partial_fit(features, labels)
         else:
             self.clf = self.clf.fit(features, labels)
-            self.learned = True
+            self.feature_length = len(features[0])
 
     def predict(self, features, verbose=False):
         """ Probability estimates of each feature

@@ -1,54 +1,41 @@
-from .Point import Point
+"""
+Segment preprocessing
+"""
 import datetime
-import defaults
+from .point import Point
 
 MIN_TIME = datetime.datetime(1999, 1, 1)
 
-def preprocessSegment(arrayOfPoints, destructive=True, accessor=Point.accessor, maxAcc=defaults.PREPROCESS_MAX_ACC):
-    """Calculates the metrics of points
+def preprocess_segment(points, max_acc, destructive=True):
+    """ Calculates the metrics of points and unrealistic ones
 
-    Uses their ordering to calculate velocities and
-    spatio-temporal distances
-    If destructive it removes points with accelarations
-    higher than maxAcc and that occured before MIN_TIME
+    Uses their ordering to calculate velocities and spatio-temporal distances
+    If destructive it removes points with accelarations higher than max_acc
+        and that occured before MIN_TIME
 
     Args:
-        arrayOfPoints: Array of TrackToTrip.Point
-        destructive: Optional, boolean. True to allow
-            the removal of elements from the initial
-            array. Default is True
-        accessor: Optional, function. Latitude, longitude
-            and time properties getter. Default is
-            TrackToTrip.Point.accessor
-        maxAcc: Optional, number. Drop points with an
-            accelaration above maxAcc. Defaul is MAX_ACC
+        points (:obj:`list` of :obj:`Point`)
+        max_acc (float): Maximum acceleration threshold
+        destructive (bool, optional): True to allow the removal of elements
+            from the initial array. Default is True
     Returns:
         A tuple with the resulting array of points and the
         the points dropped
     """
     result = []
-    skipped = []
-    lastPoint = None
-    for pi, point in enumerate(arrayOfPoints):
-        if not shouldRemoveEpoch(point, destructive):
-            plat, plon, ptime = accessor(point)
-            thisPoint = Point(lat=plat, lon=plon, time=ptime)
+    last = None
+    for point in points:
+        if not (destructive and point.time < MIN_TIME):
+            current = Point(point.lat, point.lon, point.time)
 
-            if lastPoint != None:
-                thisPoint.compute_metrics(lastPoint)
+            if last is not None:
+                current.compute_metrics(last)
 
-            if destructive and abs(thisPoint.acc) > maxAcc:
-                thisPoint = Point(lat=lastPoint.lat, lon=lastPoint.lon, time=ptime)
-                thisPoint.compute_metrics(lastPoint)
-                skipped.append((thisPoint, thisPoint.acc))
+            if destructive and abs(current.acc) > max_acc:
+                current = Point(last.lat, last.lon, point.time)
+                current.compute_metrics(last)
 
-            result.append(thisPoint)
-            lastPoint = thisPoint
-        else:
-            skipped.append(thisPoint)
+            result.append(current)
+            last = current
 
-    return result, skipped
-
-def shouldRemoveEpoch(gpxPoint, destructive):
-    return destructive and gpxPoint.time < MIN_TIME
-
+    return result

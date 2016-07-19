@@ -3,11 +3,11 @@ Point class
 """
 import math
 import datetime
-from utils import isostr_to_datetime
+from .utils import isostr_to_datetime
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 
-class Point:
+class Point(object):
     """ Spaciotemporal point representation
 
     Attributes:
@@ -151,17 +151,6 @@ class Point:
             time=isostr_to_datetime(json['time'])
         )
 
-    @staticmethod
-    def accessor(point):
-        """ Auxiliary function to map attributes to 3-tuple
-
-        Args:
-            point (:obj:`Point`)
-        Returns:
-            Tuple with lat, lon and time
-        """
-        return point.lat, point.lon, point.time
-
 
 ONE_DEGREE = 1000. * 10000.8 / 90.
 EARTH_RADIUS = 6371 * 1000
@@ -208,4 +197,3 @@ def distance(latitude_1, longitude_1, elevation_1, latitude_2, longitude_2, elev
         return distance_2d
 
     return math.sqrt(distance_2d ** 2 + (elevation_1 - elevation_2) ** 2)
-

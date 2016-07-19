@@ -1,41 +1,42 @@
+"""
+Changepoint function
+"""
 import pandas
 import numpy as np
 
-def changepoint(data):
-    s = pandas.Series(data)
-    s = s.pct_change()
-    s = s.fillna(value=0)
-    s = s.abs()
+def changepoint(data, min_time):
+    """ Calculates a change point
 
-    stat_s = []
+    Args:
+        data (:obj:`list` of float)
+        min_time (float): Min time, in seconds, until another changepoint
+    Returns:
+        :obj:`list` of int: Changepoints indexes
+    """
+    series = pandas.Series(data)
+    series = series.pct_change()
+    series = series.fillna(value=0)
+    series = series.abs()
+
+    stat_series = []
     inf = float('inf')
     changepoints = []
-    for i, v in enumerate(s):
-        if v == inf:
+    for i, val in enumerate(series):
+        if val == inf:
             changepoints.append(i)
-            stat_s.append(0)
+            stat_series.append(0)
         else:
-            stat_s.append(v)
+            stat_series.append(val)
 
-    var = np.var(stat_s)
-    mean = np.mean(stat_s)
-    print(mean, var)
+    var = np.var(stat_series)
+    mean = np.mean(stat_series)
 
     up_threshold = mean + var * 2
-    for i, d in enumerate(s):
-        if d >= up_threshold:
+    for i, vel in enumerate(series):
+        if vel >= up_threshold:
             changepoints.append(i)
 
     changepoints = list(set(changepoints))
     changepoints.sort()
 
-    return map(lambda cp: cp-1, changepoints)
-
-def changePointSegmentation(mapper, data):
-    X = changepoint(map(mapper, data))
-    segments = []
-    for i in range(0, len(X)-1):
-        segments.append(data[X[i]:X[i+1]])
-
-    return segments
-
+    return [cp-1 for cp in changepoints]

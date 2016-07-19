@@ -1,103 +1,80 @@
-from .Point import Point
+"""
+Smoothing methods
+"""
 import copy
 import numpy as np
-from kalman import kalman_filter
-import defaults
+from .point import Point
+from .kalman import kalman_filter
 
-def extrapolate_points(points, N):
-    """Extrapolate a number of points, based on the first ones
+INVERSE_STRATEGY = 0
+EXTRAPOLATE_STRATEGY = 1
+
+def extrapolate_points(points, n_points):
+    """ Extrapolate a number of points, based on the first ones
 
     Args:
-        points: sample of points to extrapolate
-        N: number of points to extrapolate
+        points (:obj:`list` of :obj:`Point`)
+        n_points (int): number of points to extrapolate
     Returns:
-        Array of tracktotrip.Point
+        :obj:`list` of :obj:`Point`
     """
     points = points[:]
     lat = []
     lon = []
     last = None
     for point in points:
-        if last!=None:
+        if last is not None:
             lat.append(last.lat-point.lat)
             lon.append(last.lon-point.lon)
         last = point
 
-    dts = np.mean(map(lambda p: p.dt, points))
+    dts = np.mean([p.dt for p in points])
     lons = np.mean(lon)
     lats = np.mean(lat)
 
-    genSample = []
+    gen_sample = []
     last = points[0]
-    for i in range(N):
-        p = Point(i*(-1), last.lat+lats, last.lon+lons, last.time, dts)
-        genSample.append(p)
-        last = p
+    for _ in range(n_points):
+        point = Point(last.lat+lats, last.lon+lons, last.time - dts)
+        point.compute_metrics(last)
+        gen_sample.append(point)
+        last = point
 
-    return genSample
+    return gen_sample
 
-def smooth(points, noise=defaults.SMOOTH_NOISE):
-    """ Smooths a set of points based on kalman filter
-        See: https://github.com/lacker/ikalman
-
-    Args:
-        points: Array of tracktotrip.Point
-        noise: Float, optional. Expected noise, the higher it is the
-            more the path will be smoothed. Default is 1.0
-    """
-    return kalman_filter(points, noise)
-
-def smooth_with_extrapolation(points, N=20, noise=defaults.SMOOTH_NOISE):
-    """Smooths a set of points, but it extrapolates
-    some points at the beginning
+def with_extrapolation(points, noise, n_points):
+    """ Smooths a set of points, but it extrapolates some points at the beginning
 
     Args:
-        points: Array of tracktotrip.Point
-        N: number of points to extrapolate
-        noise: Float, optional. Expected noise, the higher it is the
-            more the path will be smoothed. Default is 1.0
+        points (:obj:`list` of :obj:`Point`)
+        noise (float): Expected noise, the higher it is the more the path will
+            be smoothed.
+    Returns:
+        :obj:`list` of :obj:`Point`
     """
-    return smooth(extrapolate_points(points, N) + points, noise=noise)[N:]
+    return kalman_filter(extrapolate_points(points, n_points) + points, noise)[n_points:]
 
-def smooth_with_inverse(points, noise=defaults.SMOOTH_NOISE):
-    """Smooths a set of points.
+def with_inverse(points, noise):
+    """ Smooths a set of points
 
-    It smooths them twice, once in given order, another one
-    in the reverse order.
-    The the first half of the results will be taken from the
-    reverse order and the second half from the normal order.
+    It smooths them twice, once in given order, another one in the reverse order.
+    The the first half of the results will be taken from the reverse order and
+        the second half from the normal order.
 
     Args:
-        points: Array of tracktotrip.Point
-        noise: Float, optional. Expected noise, the higher it is the
-            more the path will be smoothed. Default is 1.0
+        points (:obj:`list` of :obj:`Point`)
+        noise (float): Expected noise, the higher it is the more the path will
+            be smoothed.
+    Returns:
+        :obj:`list` of :obj:`Point`
     """
-    N = len(points)/2
-    partOfPoints = copy.deepcopy(points[:N])
-    partOfPoints = list(reversed(partOfPoints))
-    part = smooth(partOfPoints, noise=noise)
-    total = smooth(points, noise=noise)
-    noiseSample = 20
-    return list(reversed(part))[:N-noiseSample] + total[(N-noiseSample):]
+    noise_sample = 20
+    n_points = len(points)/2
+    break_point = n_points - noise_sample
 
-def smooth_segment(segment, strategy="inverse", noise=defaults.SMOOTH_NOISE):
-    """Smooths a segment points
+    points_part = copy.deepcopy(points[:n_points])
+    points_part = list(reversed(points_part))
+    part = kalman_filter(points_part, noise)
+    total = kalman_filter(points, noise)
 
-    Args:
-        segment: tracktotrip.Segment
-        strategy: Optional string, strategy to use. Either 'inverse' or
-            'extrapolate'. Default is 'inverse'
-        noise: Float, optional. Expected noise, the higher it is the
-            more the path will be smoothed. Default is 1.0
-    """
-    E = "extrapolate"
-    I = "inverse"
-    if strategy == E or strategy == I:
-        temp = None
-        if strategy == E:
-            temp = smooth_with_extrapolation(segment, noise=noise)
-        elif strategy == I:
-            temp = smooth_with_inverse(segment, noise=noise)
-        return temp
-    else:
-        raise NameError("Invalid startegy, either " + E + " or " + I + ", not " + strategy)
+    return list(reversed(part))[:break_point] + total[break_point:]

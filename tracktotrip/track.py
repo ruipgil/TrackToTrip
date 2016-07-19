@@ -1,15 +1,19 @@
-import gpxpy
-from os.path import basename
-from .segment import Segment
+"""
+Track class
+"""
 from copy import deepcopy
-from similarity import segment_similarity
-from rtree import index
+from os.path import basename
+
+import gpxpy
 import numpy as np
-import defaults
+from rtree import index
+
+from .segment import Segment
+from .similarity import segment_similarity
 
 DEFAULT_FILE_NAME_FORMAT = "%Y-%m-%d"
 
-class Track:
+class Track(object):
     """Collection of segments
 
     This is a higher level class, all methods of TrackToTrip library
@@ -21,80 +25,70 @@ class Track:
         preprocessed: Boolean, true if it has been preprocessed
     """
 
-    def __init__(self, name="", segments=[]):
-        """Constructor
+    def __init__(self, name, segments):
+        """ Constructor
 
         When constructing a track it's not guaranteed that the segments
         have their properties computed. Call preprocess method over this
         class, or over each segment to guarantee it.
 
         Args:
-            name: optional, name of the current track. The default value
-                is a empty string
-            segments: optional, array of TrackToTripSegments. The default
-                value is an empty array
+            name (:obj:`str`)
+            segments(:obj:`list` of :obj:`Segment`)
         """
         self.name = name
-        self.segments = sorted(segments, key=lambda s: s.getStartTime())
+        self.segments = sorted(segments, key=lambda s: s.points[0].time)
         self.preprocessed = False
 
-    def segmentAt(self, i):
-        """Segment at index
+    # def start_time(self):
+    #     lastTime = None
+    #     for segment in self.segments:
+    #         if lastTime is None:
+    #             lastTime = segment.getStartTime()
+    #         elif lastTime > segment.getStartTime():
+    #             lastTime = segment.getStartTime()
+    #     return lastTime
 
-        Args:
-            i: index of segment to return
-        Returns:
-            A TrackToTrip segment or an excption for index out of range
-        """
-        return self.segments[i]
-
-    def getStartTime(self):
-        lastTime = None
-        for segment in self.segments:
-            if lastTime is None:
-                lastTime = segment.getStartTime()
-            elif lastTime > segment.getStartTime():
-                lastTime = segment.getStartTime()
-        return lastTime
-
-    def generateName(self, f=DEFAULT_FILE_NAME_FORMAT):
-        """Generates a name for the track
+    def generate_name(self, name_format=DEFAULT_FILE_NAME_FORMAT):
+        """ Generates a name for the track
 
         The name is generated based on the date of the first point of the
         track, or in case it doesn't exist, "EmptyTrack"
-        The DEFAULT_FILE_NAME_FORMAT constant constains the date format
 
+        Args:
+            name_format (str, optional): Name formar to give to the track, based on
+                its start time. Defaults to DEFAULT_FILE_NAME_FORMAT
         Returns:
-            A string of the generated name
+            str
         """
         if len(self.segments) > 0:
-            return self.segmentAt(0).pointAt(0).time.strftime(f) + ".gpx"
+            return self.segments[0].points[0].time.strftime(name_format) + ".gpx"
         else:
             return "EmptyTrack"
+    #
+    # def remove_noise(self, var=2):
+    #     """In-place removal of noise points
+    #
+    #     Arguments:
+    #         var: Number to adjust noise removal sensitivity
+    #     Returns:
+    #         This track
+    #     """
+    #     for segment in self.segments:
+    #         segment.removeNoise(var)
+    #     return self
 
-    def removeNoise(self, var=2):
-        """In-place removal of noise points
-
-        Arguments:
-            var: Number to adjust noise removal sensitivity
-        Returns:
-            This track
-        """
-        for segment in self.segments:
-            segment.removeNoise(var)
-        return self
-
-    def smooth(self, strategy=defaults.SMOOTH_STRATEGY, noise=defaults.SMOOTH_NOISE):
+    def smooth(self, strategy, noise):
         """In-place smoothing of segments
 
         Returns:
             This track
         """
         for segment in self.segments:
-            segment.smooth(strategy=strategy, noise=noise)
+            segment.smooth(strategy, noise)
         return self
 
-    def segment(self, eps=defaults.SEGMENT_EPS, min_time=defaults.SEGMENT_MIN_TIME):
+    def segment(self, eps, min_time):
         """In-place segmentation of segments
 
         Spatio-temporal segmentation of each segment
@@ -103,15 +97,15 @@ class Track:
         Returns:
             This track
         """
-        newSegments = []
+        new_segments = []
         for segment in self.segments:
-            s = segment.segment(eps=eps, min_time=min_time)
-            for a in s:
-                newSegments.append(Segment(a))
-        self.segments = newSegments
+            segmented = segment.segment(eps, min_time)
+            for seg in segmented:
+                new_segments.append(Segment(seg))
+        self.segments = new_segments
         return self
 
-    def simplify(self, topology_only=False, dist_threshold=defaults.SIMPLIFY_DISTANCE_THRESHOLD):
+    def simplify(self, eps, dist_threshold, topology_only=False):
         """In-place simplification of segments
 
         Args:
@@ -124,17 +118,17 @@ class Track:
             This track
         """
         for segment in self.segments:
-            segment.simplify(topology_only, dist_threshold=dist_threshold)
+            segment.simplify(eps, dist_threshold, topology_only)
         return self
 
-    def inferTransportationMode(self, clf, removeStops=defaults.TM_REMOVE_STOPS, dt_threshold=defaults.TM_DT_THRESHOLD):
+    def infer_transportation_mode(self, clf, min_time):
         """In-place transportation mode inferring of segments
 
         Returns:
             This track
         """
         for segment in self.segments:
-            segment.inferTransportationMode(clf, removeStops=removeStops, dt_threshold=dt_threshold)
+            segment.infer_transportation_mode(clf, min_time)
         return self
 
     def copy(self):
@@ -145,21 +139,20 @@ class Track:
         Returns:
             A Track object different from this instance
         """
-
         return deepcopy(self)
 
-    def toTrip(
-        self,
-        name="",
-        noise_var=2,
-        smooth_strategy='inverse',
-        smooth_noise=defaults.SMOOTH_NOISE,
-        seg_eps=defaults.SEGMENT_EPS,
-        seg_min_time=defaults.SEGMENT_MIN_TIME,
-        simplify_dist_threshold=defaults.SIMPLIFY_DISTANCE_THRESHOLD,
-        simplify_max_time=5,
-        file_format=DEFAULT_FILE_NAME_FORMAT
-    ):
+    def to_trip(
+            self,
+            name,
+            # noise_var=2,
+            smooth_strategy,
+            smooth_noise,
+            seg_eps,
+            seg_min_time,
+            simplify_dist_threshold,
+            # simplify_max_time=5,
+            file_format
+        ):
         """In-place, transformation of a track into a trip
 
         A trip is a more accurate depiction of reality than a
@@ -184,7 +177,7 @@ class Track:
         if len(name) != 0:
             name = self.name
         else:
-            name = self.generateName(file_format)
+            name = self.generate_name(file_format)
 
         # self.removeNoise(noise_var)
 
@@ -194,14 +187,14 @@ class Track:
         self.segment(seg_eps, seg_min_time)
 
         self.compute_metrics()
-        self.simplify(dist_threshold=simplify_dist_threshold)
+        self.simplify(None, simplify_dist_threshold)
 
         self.compute_metrics()
         self.name = name
 
         return self
 
-    def preprocess(self, destructive=True, max_acc=defaults.PREPROCESS_MAX_ACC):
+    def preprocess(self, max_acc, destructive=True):
         """In-place preprocessing of segments
 
         Args:
@@ -210,126 +203,136 @@ class Track:
         Returns:
             This track
         """
-        self.segments = map(lambda segment: segment.preprocess(destructive, max_acc), self.segments)
+        self.segments = [segment.preprocess(max_acc, destructive) for segment in self.segments]
         self.preprocessed = True
         return self
 
-    def inferTransportationModes(self, removeStops=False, dt_threshold=10):
+    def infer_transportation_modes(self, dt_threshold=10):
         """In-place transportation inferring of segments
 
         Returns:
             This track
         """
-        self.segments = map(lambda segment: segment.inferTransportationMode(removeStops=removeStops, dt_threshold=dt_threshold), self.segments)
+        self.segments = [
+            segment.infer_transportation_mode(dt_threshold=dt_threshold)
+            for segment in self.segments
+            ]
         return self
 
-    def inferLocation(
-        self,
-        location_query,
-        max_distance=defaults.LOCATION_MAX_DISTANCE,
-        google_key='',
-        limit=defaults.LOCATIONS_LIMIT
-    ):
+    # TODO
+    def infer_location(
+            self,
+            location_query,
+            max_distance,
+            google_key,
+            limit
+        ):
         """In-place location inferring of segments
 
         Returns:
             This track
         """
-        self.segments = map(lambda segment: segment.inferLocation(
-            location_query,
-            max_distance,
-            google_key,
-            limit
-        ), self.segments)
+        self.segments = [
+            segment.infer_location(location_query, max_distance, google_key, limit)
+            for segment in self.segments
+            ]
         return self
 
-    def toJSON(self):
+    def to_json(self):
         """Converts track to a JSON serializable format
 
         Returns:
             Map with the name, and segments of the track.
         """
         return {
-                'name': self.name,
-                'segments': map(lambda segment: segment.toJSON(), self.segments)
-                }
+            'name': self.name,
+            'segments': [segment.to_json() for segment in self.segments]
+            }
 
-    def merge_and_fit(self, track, ff, threshold=0):
-        for (selfSegIndex, trackSegIndex, diffs) in ff:
-            selfS = self.segments[selfSegIndex]
-            trackS = track.segments[trackSegIndex]
+    # TODO
+    def merge_and_fit(self, track, pairings):
+        """ Merges another track with this one, ordering the points based on a
+            distance heuristic
 
-            selfS.merge_and_fit(trackS)
+        Args:
+            track (:obj:`Track`): Track to merge with
+            pairings
+        Returns:
+            :obj:`Segment`: self
+        """
+        for (self_seg_index, track_seg_index, _) in pairings:
+            self_s = self.segments[self_seg_index]
+            track_s = track.segments[track_seg_index]
+
+            self_s.merge_and_fit(track_s)
         return self
 
-    # def trim(self, p1, p2):
-        # s1, pi1 = self.getPointIndex(p1)
-        # s2, pi2 = self.getPointIndex(p2)
+    def get_point_index(self, point):
+        """ Gets of the closest first point
 
-        # if s1 > s2:
-            # temp = s1
-            # s1 = s2
-            # s2 = temp
-
-        # if s2 == s1 and pi1 > pi2:
-            # temp = pi1
-            # pi1 = pi2
-            # pi2 = temp
-
-        # for i, segment in self.segments:
-            # if s1 <= i and i <= s2:
-
-
-        # return
-
-    def getPointIndex(self, point):
+        Args:
+            point (:obj:`Point`)
+        Returns:
+            (int, int): Segment id and point index in that segment
+        """
         for i, segment in enumerate(self.segments):
             idx = segment.getPointIndex(point)
             if idx != -1:
                 return i, idx
         return -1, -1
 
-    def getBounds(self):
-        minLat = float("inf")
-        minLon = float("inf")
-        maxLat = -float("inf")
-        maxLon = -float("inf")
+    def bounds(self):
+        """ Gets the bounds of this segment
+
+        Returns:
+            (float, float, float, float): Bounds, with min latitude, min longitude,
+                max latitude and max longitude
+        """
+        min_lat = float("inf")
+        min_lon = float("inf")
+        max_lat = -float("inf")
+        max_lon = -float("inf")
         for segment in self.segments:
             milat, milon, malat, malon = segment.getBounds()
-            minLat = min(milat, minLat)
-            minLon = min(milon, minLon)
-            maxLat = max(malat, maxLat)
-            maxLon = max(malon, maxLon)
-        return minLat, minLon, maxLat, maxLon
+            min_lat = min(milat, min_lat)
+            min_lon = min(milon, min_lon)
+            max_lat = max(malat, max_lat)
+            max_lon = max(malon, max_lon)
+        return min_lat, min_lon, max_lat, max_lon
 
-    def hasPoint(self, point):
-        s_ix, _ = self.getPointIndex(point)
+    def has_point(self, point):
+        """ Checks if a point exist in any of the segments
+
+        Args:
+            points (:obj:`Point`)
+        Returns:
+            bool
+        """
+        s_ix, _ = self.get_point_index(point)
         return s_ix != -1
 
     def similarity(self, track):
-        """Compares two tracks based on their topology
+        """ Compares two tracks based on their topology
 
         This method compares the given track against this
         instance. It only verifies if given track is close
         to this one, not the other way arround
 
         Args:
-            track: tracktotrip.Track to be compared with
+            track (:obj:`Track`)
         Returns:
             Two-tuple with global similarity between tracks
             and an array the similarity between segments
         """
-
         idx = index.Index()
-        n = 0
-        for segment in self.segments:
-            idx.insert(n, segment.getBounds(), obj=segment)
-            n = n + 1
+        i = 0
+        for i, segment in enumerate(self.segments):
+            idx.insert(i, segment.bounds(), obj=segment)
 
         final_siml = []
         final_diff = []
         for i, segment in enumerate(track.segments):
-            query = idx.intersection(segment.getBounds(), objects=True)
+            query = idx.intersection(segment.bounds(), objects=True)
 
             res_siml = []
             res_diff = []
@@ -348,15 +351,21 @@ class Track:
                 final_siml.append(0)
                 final_diff.append([])
 
-        # print("fin", final_siml, final_diff)
         return np.mean(final_siml), final_diff
 
     def compute_metrics(self):
+        """ Computes metrics for every segment's point
+
+        See Segment.compute_metrics
+
+        Returns:
+            :obj:`Track`: Self
+        """
         for segment in self.segments:
             segment.compute_metrics()
         return self
 
-    def toGPX(self):
+    def to_gpx(self):
         """Converts track to a GPX format
 
         Uses GPXPY library as an intermediate format
@@ -373,102 +382,131 @@ class Track:
             gpx_track.segments.append(gpx_segment)
 
             for point in segment.points:
-                gpx_segment.points.append(gpxpy.gpx.GPXTrackPoint(point.lat, point.lon, time=point.time))
+                gpx_point = gpxpy.gpx.GPXTrackPoint(point.lat, point.lon, time=point.time)
+                gpx_segment.points.append(gpx_point)
         return gpx.to_xml()
 
-    def toLIFE(self):
+    def to_life(self):
         """Converts track to LIFE format
         """
         buff = "--%s\n" % self.segments[0].points[0].time.strftime("%Y_%m_%d")
         # buff += "--" + day
         # buff += "UTC+s" # if needed
 
-        def militaryTime(time):
+        def military_time(time):
+            """ Converts time to military time
+
+            Args:
+                time (:obj:`datetime.datetime`)
+            Returns:
+                str: Time in the format 1245 (12 hours and 45 minutes)
+            """
             return time.strftime("%H%M")
 
         def stay(buff, start, end, place):
-            if type(start) is not str:
-                start = militaryTime(start)
-            if type(end) is not str:
-                end = militaryTime(end)
+            """ Creates a stay representation
+
+            Args:
+                start (:obj:`datetime.datetime` or str)
+                end (:obj:`datetime.datetime` or str)
+                place (:obj:`Location`)
+            Returns:
+                str
+            """
+            if not isinstance(start, str):
+                start = military_time(start)
+            if not isinstance(end, str):
+                end = military_time(end)
 
             return "%s\n%s-%s: %s" % (buff, start, end, place.label)
 
         def trip(buff, segment):
-            tp = "%s-%s: %s -> %s" % (
-                militaryTime(segment.points[0].time),
-                militaryTime(segment.points[-1].time),
+            """ Creates a trip representation
+
+            Args:
+                buff (str): buffer
+                segment (:obj:`Segment`)
+            Returns:
+                str: buffer and trip representation
+            """
+            trip = "%s-%s: %s -> %s" % (
+                military_time(segment.points[0].time),
+                military_time(segment.points[-1].time),
                 segment.location_from.label,
                 segment.location_to.label
             )
 
             t_modes = segment.transportation_modes
             if len(t_modes) == 1:
-                tp = "%s [%s]" % (tp, t_modes[0]['label'])
+                trip = "%s [%s]" % (trip, t_modes[0]['label'])
             else:
                 modes = []
                 for mode in t_modes:
-                    f = militaryTime(segment.points[mode['from']].time)
-                    t = militaryTime(segment.points[mode['to']].time)
-                    modes.append("    %s-%s: [%s]" % (f, t, mode['label']))
-                tp = "%s\n%s" % (tp, "\n".join(modes))
+                    trip_from = military_time(segment.points[mode['from']].time)
+                    trip_to = military_time(segment.points[mode['to']].time)
+                    modes.append("    %s-%s: [%s]" % (trip_from, trip_to, mode['label']))
+                trip = "%s\n%s" % (trip, "\n".join(modes))
 
-            return "%s\n%s" % (buff, tp)
+            return "%s\n%s" % (buff, trip)
 
-        LAST = len(self.segments) - 1
+        last = len(self.segments) - 1
         for i, segment in enumerate(self.segments):
             if i == 0:
-                buff = stay(buff, "0000", militaryTime(segment.points[0].time), segment.location_from)
+                buff = stay(
+                    buff,
+                    "0000",
+                    military_time(segment.points[0].time),
+                    segment.location_from
+                )
             buff = trip(buff, segment)
-            if i is LAST:
-                buff = stay(buff, militaryTime(segment.points[0].time), "2359", segment.location_to)
+            if i is last:
+                buff = stay(
+                    buff,
+                    military_time(segment.points[0].time),
+                    "2359",
+                    segment.location_to
+                )
             else:
                 next_seg = self.segments[i+1]
-                buff = stay(buff, militaryTime(segment.points[-1].time), militaryTime(next_seg.points[0].time), segment.location_from)
+                buff = stay(
+                    buff,
+                    military_time(segment.points[-1].time),
+                    military_time(next_seg.points[0].time),
+                    segment.location_from
+                )
 
         return buff
 
-        # TODO use LIFE own types
-
-        # spans = []
-        # D_SPAN_FORMAT = "%H%M"
-        # for segment in self.segments:
-            # span_time = "%s%s" % (segment.getStartTime().strftime(D_SPAN_FORMAT), segment.getEndTime().strftime(D_SPAN_FORMAT))
-            # buf = "%s: %s" % (span_time, segment.locationFrom.label)
-            # if segment.locationTo != None:
-                # buf = "%s "
-        return ""
-
     @staticmethod
-    def fromGPX(filePath):
-        """Creates a Track from a GPX file.
+    def from_gpx(file_path):
+        """ Creates a Track from a GPX file.
 
         No preprocessing is done.
 
         Arguments:
-            filePath: file path and name to the GPX file
+            file_path (str): file path and name to the GPX file
         Return:
-            A Track instance
+            :obj:`list` of :obj:`Track`
         """
-        gpx = gpxpy.parse(open(filePath, 'r'))
-        fileName = basename(filePath)
+        gpx = gpxpy.parse(open(file_path, 'r'))
+        file_name = basename(file_path)
 
         tracks = []
-        for ti, track in enumerate(gpx.tracks):
+        for i, track in enumerate(gpx.tracks):
             segments = []
             for segment in track.segments:
-                segments.append(Segment.fromGPX(segment))
+                segments.append(Segment.from_gpx(segment))
 
             if len(gpx.tracks) > 1:
-                name = fileName + "_" + str(ti)
+                name = file_name + "_" + str(i)
             else:
-                name = fileName
+                name = file_name
             tracks.append(Track(name, segments))
 
         return tracks
 
     @staticmethod
-    def fromJSON(json):
+    def from_json(json):
         """Creates a Track from a JSON file.
 
         No preprocessing is done.
@@ -478,6 +516,5 @@ class Track:
         Return:
             A track instance
         """
-        segments = map(lambda s: Segment.fromJSON(s), json['segments'])
-        return Track(json['name'], segments).preprocess()
-
+        segments = [Segment.from_json(s) for s in json['segments']]
+        return Track(json['name'], segments).compute_metrics()

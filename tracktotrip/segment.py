@@ -1,25 +1,29 @@
-from .Point import Point
-from smooth import smooth_segment
-from .noiseDetection import removeNoise
-# from .simplify import simplify
-from td_compression import td_tr, td_sp
-from .preprocess import preprocessSegment
-from .Location import inferLocation
-from .transportationMode import inferTransportationMode
-from .spatiotemporal_segmentation import spatiotemporal_segmentation
-from .drp import drp
-from .similarity import sortSegmentPoints
+"""
+Point segment module
+"""
+from copy import deepcopy
 
 import numpy as np
-from copy import deepcopy
-import defaults
 
-class Segment:
+from .drp import drp
+from .point import Point
+from .smooth import with_extrapolation, with_inverse, INVERSE_STRATEGY, EXTRAPOLATE_STRATEGY
+from .td_compression import td_sp
+from .preprocess import preprocess_segment
+from .location import infer_location
+from .transportation_mode import speed_clustering
+from .spatiotemporal_segmentation import spatiotemporal_segmentation
+from .similarity import sort_segment_points
+
+# from .noise_detection import remove_noise
+
+class Segment(object):
     """Holds the points and semantic information about them
 
     Attributes:
-        points: points of the segment
-        transportationModes: array of transportation modes of the segment
+        points (:obj:`list` of :obj:`Point`): points of the segment
+        #TODO
+        transportation_modes: array of transportation modes of the segment
             Each transportation mode represents a span of points
             Each span is a map in the following format:
                 label: string with the type of transportation mode
@@ -31,108 +35,92 @@ class Segment:
             the end of the segment
     """
 
-    def __init__(self, points=[]):
-        """Constructor
-
-        Args:
-            points: points of the segment
-        """
+    def __init__(self, points):
         self.points = points
         self.transportation_modes = []
         self.location_from = None
         self.location_to = None
 
-    def pointAt(self, i):
-        """Point at index
+    def bounds(self, lower_index=0, upper_index=-1):
+        """ Computes the bounds of the segment, or part of it
 
         Args:
-            i: index
+            lower_index (int, optional): Start index. Defaults to 0
+            upper_index (int, optional): End index. Defaults to 0
         Returns:
-            Point or index out of range exception
+            :obj:`tuple` of :obj:`float`: Bounds of the (sub)segment, such that
+                (min_lat, min_lon, max_lat, max_lon)
         """
-        return self.points[i]
+        points = self.points[lower_index:upper_index]
 
-    def getStartTime(self):
-        return self.points[0].time
+        min_lat = float("inf")
+        min_lon = float("inf")
+        max_lat = -float("inf")
+        max_lon = -float("inf")
 
-    def getEndTime(self):
-        return self.points[-1].time
+        for point in points:
+            min_lat = min(min_lat, point.lat)
+            min_lon = min(min_lon, point.lon)
+            max_lat = max(max_lat, point.lat)
+            max_lon = max(max_lon, point.lon)
 
-    def getBounds(self, lowerIndex = 0, upperIndex = -1):
-        """Computes the bounds of the segment, or part of it
+        return (min_lat, min_lon, max_lat, max_lon)
+
+    # TODO
+    # def removeNoise(self, var=2):
+    #     """In-place removal of noise points
+    #
+    #     Applies removeNoise function to points
+    #
+    #     Returns:
+    #         This segment
+    #     """
+    #     self.points = remove_noise(self.points, var=var)
+    #     return self
+
+    def smooth(self, noise, strategy=INVERSE_STRATEGY):
+        """ In-place smoothing
+
+        See smooth_segment function
 
         Args:
-            lowerIndex: Optional, start index. Default is 0
-            upperIndex: Optional, end index. Default is -1,
-                the last point
+            noise (float): Noise expected
+            strategy (int): Strategy to use. Either smooth.INVERSE_STRATEGY
+                or smooth.EXTRAPOLATE_STRATEGY
         Returns:
-            Array with two arrays. The first one with the
-            minimum latitude and longitude, the second with
-            the maximum latitude and longitude of the segment
-            slice
+            :obj:`Segment`
         """
-        pointSet = self.points[lowerIndex:upperIndex]
-
-        minLat = float("inf")
-        minLon = float("inf")
-        maxLat = -float("inf")
-        maxLon = -float("inf")
-
-        for point in pointSet:
-            minLat = min(minLat, point.lat)
-            minLon = min(minLon, point.lon)
-            maxLat = max(maxLat, point.lat)
-            maxLon = max(maxLon, point.lon)
-
-        return (minLat, minLon, maxLat, maxLon)
-
-
-    def removeNoise(self, var=2):
-        """In-place removal of noise points
-
-        Applies removeNoise function to points
-
-        Returns:
-            This segment
-        """
-        self.points = removeNoise(self.points, var=var)
+        if strategy is INVERSE_STRATEGY:
+            self.points = with_inverse(self.points, noise)
+        elif strategy is EXTRAPOLATE_STRATEGY:
+            self.points = with_extrapolation(self.points, noise, 30)
         return self
 
-    def smooth(self, strategy=defaults.SMOOTH_STRATEGY, noise=defaults.SMOOTH_NOISE):
-        """In-place smoothing
-
-        Applies smoothSegment function to points
-
-        Returns:
-            This segment
-        """
-        self.points = smooth_segment(self.points, strategy=strategy, noise=noise)
-        return self
-
-    def segment(self, eps=defaults.SEGMENT_EPS, min_time=defaults.SEGMENT_MIN_TIME):
+    def segment(self, eps, min_time):
         """Spatio-temporal segmentation
 
-        Applies segmentSegment function to points,
-        without changing this segment
+        See spatiotemporal_segmentation function
 
+        Args:
+            eps (float): Maximum distance between two samples
+            min_time (float): Minimum time between to segment
         Returns:
-            An array of arrays of points
+            :obj:`list` of :obj:`Point`
         """
         return spatiotemporal_segmentation(self.points, eps, min_time)
 
-    def simplify(self, topology_only=False, dist_threshold=defaults.SIMPLIFY_DISTANCE_THRESHOLD, eps=defaults.SIMPLIFY_EPS):
-        """In-place segment simplification
+    def simplify(self, eps, dist_threshold, topology_only=False):
+        """ In-place segment simplification
 
-        Applies simplify function to points
+        See drp and td_sp functions
 
         Args:
-            topology_only: Boolean, optional. True to keep
-                the topology, neglecting velocity and time
-                accuracy (use common Douglas-Ramen-Peucker).
-                False (default) to simplify segment keeping
-                the velocity between points.
+            topology_only (bool, optional): True to only keep topology, not considering
+                times when simplifying. Defaults to False.
+            dist_threshold (float, optional): Distance threshold for the td_sp function
+            eps (float, optional): Distance thresgold for the drp function
         Returns:
-            This segment
+            :obj:`Segment`
         """
         if topology_only:
             self.points = drp(self.points, eps)
@@ -141,6 +129,11 @@ class Segment:
         return self
 
     def compute_metrics(self):
+        """ Computes metrics for each point
+
+        Returns:
+            :obj:`Segment`: self
+        """
         prev = None
         for point in self.points:
             if prev is None:
@@ -150,44 +143,39 @@ class Segment:
                 prev = point
         return self
 
-    def preprocess(self, destructive=True, maxAcc=defaults.PREPROCESS_MAX_ACC):
+    def preprocess(self, max_acc, destructive=True):
         """In-place segment preprocessing
 
-        Applies preprocessSegment function to points
+        See preprocess_segment function
 
         Args:
-            destructive: Optional, boolean. True to allow point
-                removal. More details in preprocessSegment
+            max_acc (float): Max acceleration threshold.
+            destructive (bool, optional): Remove points. Defauts to True
         Returns:
-            This segment
+            :obj:`Segment`: self
         """
-        points, _ = preprocessSegment(self.points, destructive=destructive, maxAcc=maxAcc)
+        points = preprocess_segment(self.points, max_acc, destructive)
         self.points = points
         return self
 
-    def inferLocation(
-            self,
-            location_query,
-            max_distance=defaults.LOCATION_MAX_DISTANCE,
-            google_key='',
-            limit=defaults.LOCATIONS_LIMIT
-        ):
+    def infer_location(self, location_query, max_distance, google_key, limit):
         """In-place location inferring
 
-        Applies inferLocation function to points
+        See infer_location function
 
+        Args:
         Returns:
-            This segment
+            :obj:`Segment`: self
         """
 
-        self.location_from = inferLocation(
+        self.location_from = infer_location(
             self.points[0],
             location_query,
             max_distance=max_distance,
             google_key=google_key,
             limit=limit
         )
-        self.location_to = inferLocation(
+        self.location_to = infer_location(
             self.points[-1],
             location_query,
             max_distance=max_distance,
@@ -197,54 +185,57 @@ class Segment:
 
         return self
 
-    def inferTransportationMode(self, clf, removeStops=defaults.TM_REMOVE_STOPS, dt_threshold=defaults.TM_DT_THRESHOLD):
+    def infer_transportation_mode(self, clf, min_time):
         """In-place transportation mode inferring
 
-        Applies inferTransportationMode function to points
+        See infer_transportation_mode function
 
+        Args:
         Returns:
-            This segment
+            :obj:`Segment`: self
         """
-        self.transportation_modes = inferTransportationMode(self.points, removeStops=removeStops, dt_threshold=dt_threshold, clf=clf)
+        self.transportation_modes = speed_clustering(clf, self.points, min_time)
         return self
 
     def merge_and_fit(self, segment):
-        """Merge points with another segment points
+        """ Merges another segment with this one, ordering the points based on a
+            distance heuristic
 
+        Args:
+            segment (:obj:`Segment`): Segment to merge with
+        Returns:
+            :obj:`Segment`: self
         """
-        self.points = sortSegmentPoints(self.points, segment.points)
+        self.points = sort_segment_points(self.points, segment.points)
         return self
 
-    def closestPointTo(self, point, thr=20.0):
-        """Finds the closest point in the segment to
-        a given point
+    def closest_point_to(self, point, thr=20.0):
+        """ Finds the closest point in the segment to a given point
 
         Args:
-            point: tracktotrip.Point
-            thr: Number, optional, distance threshold to be considered
-                the same point
+            point (:obj:`Point`)
+            thr (float, optional): Distance threshold, in meters, to be considered
+                the same point. Defaults to 20.0
         Returns:
-            Number, index of the point. -1 if doesn't exist
+            int: Index of the point. -1 if doesn't exist
         """
-        distances = map(lambda p: p.distance(point), self.points)
-        print(distances)
-        minIndex = np.argmin(distances)
-        print(minIndex, distances[minIndex])
+        distances = [p.distance(point) for p in self.points]
+        min_index = np.argmin(distances)
 
-        if distances[minIndex] > thr:
+        if distances[min_index] > thr:
             return -1
         else:
-            return minIndex
+            return min_index
 
     def slice(self, start, end):
-        """Creates a copy of the current segment between
-        indexes. If end > start, points are reverted
+        """ Creates a copy of the current segment between indexes. If end > start,
+            points are reverted
 
         Args:
-            start: Number, start index
-            end: Number, end index
+            start (int): Start index
+            end (int): End index
         Returns:
-            tracktotrip.Segment
+            :obj:`Segment`
         """
 
         reverse = False
@@ -255,7 +246,6 @@ class Segment:
             reverse = True
 
         seg = self.copy()
-        print("slicing %s-%s" % (start, end))
         seg.points = seg.points[start:end+1]
         if reverse:
             seg.points = list(reversed(seg.points))
@@ -263,61 +253,55 @@ class Segment:
         return seg
 
     def copy(self):
+        """ Creates a deep copy of this instance
+
+        Returns:
+            :obj:`Segment`
+        """
         return deepcopy(self)
 
-    def toJSON(self):
-        """Converts segment to a JSON serializable format
+    def to_json(self):
+        """ Converts segment to a JSON serializable format
 
         Returns:
-            Map with the points, transportationModes and locations (from
-                and to)and segments of the segment.
+            :obj:`dict`
         """
+        points = [point.to_json() for point in self.points]
         return {
-                'points': map(lambda point: point.to_json(), self.points),
-                'transportationModes': self.transportation_modes,
-                'locationFrom': self.location_from.toJSON() if self.location_from != None else None,
-                'locationTo': self.location_to.toJSON() if self.location_to != None else None
-                }
-
-    def length(self):
-        """Returns the number of point of the segment
-
-        Returns:
-            Number of points of the segment
-        """
-        return len(self.points)
+            'points': points,
+            'transportationModes': self.transportation_modes,
+            'locationFrom': self.location_from.to_json() if self.location_from != None else None,
+            'locationTo': self.location_to.to_json() if self.location_to != None else None
+        }
 
     @staticmethod
-    def fromGPX(gpxSegment):
-        """Creates a Segment from a GPX format.
+    def from_gpx(gpx_segment):
+        """ Creates a segment from a GPX format.
 
         No preprocessing is done.
 
         Arguments:
-            gpxSegment: a gpxpy.GPXTrackSegment
+            gpx_segment (:obj:`gpxpy.GPXTrackSegment`)
         Return:
-            A Segment instance
+            :obj:`Segment`
         """
         points = []
-        for i, point in enumerate(gpxSegment.points):
+        for point in gpx_segment.points:
             points.append(Point.from_gpx(point))
         return Segment(points)
 
     @staticmethod
-    def fromJSON(json):
-        """Creates a Segment from a JSON file.
+    def from_json(json):
+        """ Creates a segment from a JSON file.
 
         No preprocessing is done.
 
         Arguments:
-            json: map with the keys: points, and optionally, transportationModes,
-                locationFrom and locationTo.
+            json (:obj:`dict`): JSON representation. See to_json.
         Return:
-            A Segment instance
+            :obj:`Segment`
         """
-        # FIXME
         points = []
-        for i, point in enumerate(json['points']):
+        for point in json['points']:
             points.append(Point.from_json(point))
         return Segment(points)
-

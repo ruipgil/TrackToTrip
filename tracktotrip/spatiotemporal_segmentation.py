@@ -19,7 +19,6 @@ def correct_segmentation(segments, clusters, min_time):
 
     result_segments = []
     prev_segment = None
-    print(len(segments))
     for i, segment in enumerate(segments):
         cluster = clusters[i]
         if prev_segment is None:
@@ -66,8 +65,8 @@ def spatiotemporal_segmentation(points, eps, min_time):
         :obj:`list` of :obj:`list` of :obj:`Point`: Initial set of
             points in different segments
     """
-    sample_rate = np.average([point.dt for point in points])
-    min_samples = min_time / sample_rate
+    # min time / sample rate
+    min_samples = min_time / np.average([point.dt for point in points])
 
     data = [point.gen3arr() for point in points]
     data = StandardScaler().fit_transform(data)
@@ -92,4 +91,3 @@ def spatiotemporal_segmentation(points, eps, min_time):
             clusters[label + 1].append(point)
 
     return correct_segmentation(segments, clusters, min_time)
-
