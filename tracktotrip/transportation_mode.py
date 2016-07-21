@@ -2,7 +2,8 @@
 Transportation mode infering
 """
 import numpy as np
-from .changepoint import changepoint
+from changepy import pelt
+from changepy.costs import normal_mean
 
 def extract_features(points, n_tops):
     """ Feature extractor
@@ -53,7 +54,8 @@ def speed_clustering(clf, points, min_time):
         :obj:`list` of :obj:`dict`
     """
     # get changepoint indexes
-    changepoints = changepoint([p.vel for p in points], min_time)
+    data = [p.vel for p in points]
+    changepoints = pelt(normal_mean(data, np.std(data)), len(data))
 
     # Doesn't have change points
     if len(changepoints) == 0:
