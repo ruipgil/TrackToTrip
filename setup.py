@@ -14,14 +14,14 @@ REQS = [
     'scipy==0.17.1',
     'six==1.10.0',
     'sklearn==0.0',
-    # 'py_kalman',
+    'ikalman',
     'changepy'
 ]
 
 setup(
     name='tracktotrip',
     packages=['tracktotrip'],
-    version='0.1.5',
+    version='0.2',
     description='Track processing library',
     author='Rui Gil',
     author_email='ruipgil@gmail.com',
