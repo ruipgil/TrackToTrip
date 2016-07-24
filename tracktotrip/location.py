@@ -5,6 +5,7 @@ from math import sqrt
 import requests
 import numpy as np
 from sklearn.cluster import DBSCAN
+from .point import Point
 from .utils import estimate_meters_to_deg
 
 
@@ -66,7 +67,9 @@ def update_location_centroid(point, cluster, max_distance, min_samples):
     if biggest_centroid is None:
         biggest_centroid = compute_centroid(points)
 
-    return biggest_centroid, points
+    points = [Point(p[0], p[1], None) for p in points]
+    centroid = Point(biggest_centroid[0], biggest_centroid[1], None)
+    return centroid, points
 
 
 def query_google(point, max_distance, key):

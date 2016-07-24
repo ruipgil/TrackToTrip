@@ -3,7 +3,7 @@ Learns trips
 """
 from .similarity import segment_similarity
 
-def learn_trip(current, current_id, canonical_trips, insert_canonical, update_canonical):
+def learn_trip(current, current_id, canonical_trips, insert_canonical, update_canonical, eps):
     """Learns a trip against of other canonical trips
 
     Args:
@@ -38,7 +38,7 @@ def learn_trip(current, current_id, canonical_trips, insert_canonical, update_ca
             # print("Same as canonical trip, fitting trip")
             # Same trip, fit all segments
             trip.merge_and_fit(current)#, diffs)
-            trip.simplify(topology_only=True)
+            trip.simplify(eps, 0, topology_only=True)
             update_canonical(trip_id, trip, current_id)
 
         elif similarity >= 0.3:
@@ -46,10 +46,10 @@ def learn_trip(current, current_id, canonical_trips, insert_canonical, update_ca
             # Fit similar segments
             orig = trip.copy()
             trip.merge_and_fit(current)#, diffs, threshold=0.2)
-            trip.simplify(topology_only=True)
+            trip.simplify(eps, 0, topology_only=True)
 
             current.merge_and_fit(orig)#, diffs, threshold=0.8)
-            current.simplify(topology_only=True)
+            current.simplify(eps, 0, topology_only=True)
 
             # updateCanonicalTrip(tripId, trip, currentTripId)
             # updateCanonicalTrip(tripId, trip, currentTripId)
@@ -57,5 +57,5 @@ def learn_trip(current, current_id, canonical_trips, insert_canonical, update_ca
         else:
             # print("New canonical trip, with similar boundingbox to others")
             # Insert new canonical representation
-            current.simplify(topology_only=True)
+            current.simplify(eps, 0, topology_only=True)
             insert_canonical(current, current_id)

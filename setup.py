@@ -4,6 +4,8 @@ Setup script
 from distutils.core import setup
 
 REQS = [
+    'gpxpy',
+    'requests',
     'numpy==1.11.0',
     'pandas==0.18.1',
     'pykalman==0.9.5',
@@ -21,7 +23,7 @@ REQS = [
 setup(
     name='tracktotrip',
     packages=['tracktotrip'],
-    version='0.2',
+    version='0.2.2',
     description='Track processing library',
     author='Rui Gil',
     author_email='ruipgil@gmail.com',
