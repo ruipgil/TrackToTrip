@@ -1,7 +1,35 @@
 """
 Learns trips
 """
+import numpy as np
 from .similarity import segment_similarity
+
+def complete_trip(canonical_trips, from_point, to_point):
+    """ Completes a trip based on set of canonical trips
+
+    Args:
+        canonical_trips (:obj:`list` of :obj:`Segment`)
+        from_point (:obj:`Point`)
+        to_point (:obj:`Point`)
+    """
+    result = []
+    weights = []
+    total_weights = 0.0
+    # match points in lines
+    for (_, trip, count) in canonical_trips:
+        from_index = trip.closest_point_to(from_point)
+        to_index = trip.closest_point_to(to_point)
+        if from_index != to_index and from_index != -1 and to_index != -1:
+            trip_slice = trip.slice(from_index, to_index)
+            result.append([[p.lat, p.lon] for p in trip_slice.points])
+            weights.append(count)
+            total_weights = total_weights + count
+
+    return {
+        'possibilities': result,
+        'weights': list(np.array(weights) / total_weights)
+    }
+
 
 def learn_trip(current, current_id, canonical_trips, insert_canonical, update_canonical, eps):
     """Learns a trip against of other canonical trips

@@ -40,7 +40,8 @@ def isostr_to_datetime(dt_str):
     Returns:
         :obj:`datetime.datetime`
     """
-    delta_t, _, us_m = dt_str.partition(".")
-    delta_t = datetime.datetime.strptime(delta_t, "%Y-%m-%dT%H:%M:%S")
-    us_m = int(us_m.rstrip("Z"), 10)
-    return delta_t + datetime.timedelta(microseconds=us_m)
+    return datetime.datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%SZ")
+    # delta_t, _, us_m = dt_str.partition(".")
+    # delta_t = datetime.datetime.strptime(delta_t, "%Y-%m-%dT%H:%M:%S")
+    # us_m = int(us_m.rstrip("Z"), 10)
+    # return delta_t + datetime.timedelta(microseconds=us_m)

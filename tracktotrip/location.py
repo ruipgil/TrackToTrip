@@ -128,11 +128,12 @@ def infer_location(point, location_query, max_distance, google_key, limit):
 
     if location_query is not None:
         queried_locations = location_query(point, max_distance)
+        print("locs", queried_locations)
         for (label, centroid, _) in queried_locations:
             locations.append({
-                'label': label,
+                'label': unicode(label, 'utf-8'),
                 'distance': centroid.distance(point),
-                'cantroid': centroid,
+                # 'centroid': centroid,
                 'suggestion_type': 'KB'
                 })
         locations = sorted(locations, key=lambda d: d['distance'])
@@ -144,6 +145,22 @@ def infer_location(point, location_query, max_distance, google_key, limit):
     locations = locations[:limit]
 
     return Location(locations[0]['label'], point, locations)
+
+# KB_METHOD = 'KB'
+# GM_METHOD = 'GM'
+# class LocationOption(object):
+#     def __init__(self, label, centroid, distance, method):
+#         self.label = label
+#         self.centroid = centroid
+#         self.distance = distance
+#         self.method = method
+#     def to_json(self):
+#         return {
+#             'label': unicode(label, 'utf-8'),
+#             'distance': self.distance,
+#             'centroid': self.centroid,
+#             'suggestion_type': self.method
+#             }
 
 
 class Location(object):

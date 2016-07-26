@@ -5,6 +5,27 @@ import numpy as np
 from changepy import pelt
 from changepy.costs import normal_mean
 
+def learn_transportation_mode(track, clf):
+    """ Inserts transportation modes of a track into a classifier
+
+    Args:
+        track (:obj:`Track`)
+        clf (:obj:`Classifier`)
+    """
+    for segment in track.segments:
+        tmodes = segment.transportation_modes
+        points = segment.points
+        features = []
+        labels = []
+
+        for tmode in tmodes:
+            points_part = points[tmode['from']:tmode['to']]
+            if len(points_part) > 0:
+                features.append(extract_features(points_part, clf.feature_length/2))
+                labels.append(tmode['label'])
+
+        clf.learn(features, labels)
+
 def extract_features(points, n_tops):
     """ Feature extractor
 
