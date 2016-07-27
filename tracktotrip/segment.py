@@ -8,12 +8,12 @@ import numpy as np
 from .drp import drp
 from .point import Point
 from .smooth import with_extrapolation, with_inverse, INVERSE_STRATEGY, EXTRAPOLATE_STRATEGY
-from .td_compression import td_sp
-from .preprocess import preprocess_segment
 from .location import infer_location
+from .similarity import sort_segment_points
+from .preprocess import preprocess_segment
+from .td_compression import td_sp
 from .transportation_mode import speed_clustering
 from .spatiotemporal_segmentation import spatiotemporal_segmentation
-from .similarity import sort_segment_points
 
 # from .noise_detection import remove_noise
 

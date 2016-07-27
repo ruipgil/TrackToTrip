@@ -47,10 +47,11 @@ def update_location_centroid(point, cluster, max_distance, min_samples):
 
     clusters = {}
     for i, label in enumerate(p_cluster.labels_):
+        point = Point(point[i][0], point[i][1], None)
         if label in clusters.keys():
-            clusters[label].append(points[i])
+            clusters[label].append(point)
         else:
-            clusters[label] = [points[i]]
+            clusters[label] = [point]
 
     centroids = []
     biggest_centroid_l = -float("inf")
