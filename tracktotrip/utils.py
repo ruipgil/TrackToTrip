@@ -2,6 +2,7 @@
 Util functions
 """
 import datetime
+from itertools import tee, izip
 
 PRECISION_PERSON = 5
 
@@ -45,3 +46,9 @@ def isostr_to_datetime(dt_str):
     # delta_t = datetime.datetime.strptime(delta_t, "%Y-%m-%dT%H:%M:%S")
     # us_m = int(us_m.rstrip("Z"), 10)
     # return delta_t + datetime.timedelta(microseconds=us_m)
+
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    now, nxt = tee(iterable)
+    next(nxt, None)
+    return izip(now, nxt)

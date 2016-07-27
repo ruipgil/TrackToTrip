@@ -4,6 +4,7 @@ Transportation mode infering
 import numpy as np
 from changepy import pelt
 from changepy.costs import normal_mean
+from .utils import pairwise
 
 def learn_transportation_mode(track, clf):
     """ Inserts transportation modes of a track into a classifier
@@ -64,6 +65,44 @@ def extract_features(points, n_tops):
 
     return result
 
+def speed_difference(points):
+    """ Computes the speed difference between each adjacent point
+
+    Args:
+        points (:obj:`Point`)
+    Returns:
+        :obj:`list` of int: Indexes of changepoints
+    """
+    data = [0]
+    for before, after in pairwise(points):
+        data.append(before.vel - after.vel)
+    return data
+
+def detect_changepoints(points, min_time, data_processor=speed_difference):
+    """ Detects changepoints on points that have at least a specific duration
+
+    Args:
+        points (:obj:`Point`)
+        min_time (float): Min time that a sub-segmented, bounded by two changepoints, must have
+        data_processor (function): Function to extract data to feed to the changepoint algorithm.
+            Defaults to `speed_difference`
+    Returns:
+        :obj:`list` of int: Indexes of changepoints
+    """
+    data = data_processor(points)
+    changepoints = pelt(normal_mean(data, np.std(data)), len(data))
+
+    result = []
+    for start, end in pairwise(changepoints):
+        time_diff = points[end].time_difference(points[start])
+        if time_diff < min_time:
+            result.append(start)
+    # adds the last changepoint detected
+    result.append(changepoints[-1])
+    # adds the last index
+    result.append(len(points) - 1)
+    return list(set(result))
+
 def speed_clustering(clf, points, min_time):
     """ Transportation mode infering, based on changepoint segmentation
 
@@ -75,15 +114,7 @@ def speed_clustering(clf, points, min_time):
         :obj:`list` of :obj:`dict`
     """
     # get changepoint indexes
-    data = [p.vel for p in points]
-    changepoints = pelt(normal_mean(data, np.std(data)), len(data))
-
-    # Doesn't have change points
-    if len(changepoints) == 0:
-        changepoints.append(0)
-
-    # insert last point to be a change point
-    changepoints.append(len(points) - 1)
+    changepoints = detect_changepoints(points, min_time)
 
     # info for each changepoint
     cp_info = []
