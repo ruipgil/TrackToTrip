@@ -27,7 +27,6 @@ def correct_segmentation(segments, clusters, min_time):
             cluster_dt = 0
             if len(cluster) > 0:
                 cluster_dt = abs(cluster[0].time_difference(cluster[-1]))
-            print(i, cluster_dt, cluster_dt <= min_time)
             if cluster_dt <= min_time:
                 prev_segment.extend(segment)
             else:

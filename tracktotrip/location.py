@@ -67,9 +67,11 @@ def update_location_centroid(point, cluster, max_distance, min_samples):
     if biggest_centroid is None:
         biggest_centroid = compute_centroid(points)
 
-    points = [Point(p[0], p[1], None) for p in points]
-    centroid = Point(biggest_centroid[0], biggest_centroid[1], None)
-    return centroid, points
+        points = [Point(p[0], p[1], None) for p in points]
+        centroid_point = Point(biggest_centroid[0], biggest_centroid[1], None)
+        return centroid_point, points
+    else:
+        return point, cluster
 
 
 def query_google(point, max_distance, key):
@@ -128,7 +130,6 @@ def infer_location(point, location_query, max_distance, google_key, limit):
 
     if location_query is not None:
         queried_locations = location_query(point, max_distance)
-        print("locs", queried_locations)
         for (label, centroid, _) in queried_locations:
             locations.append({
                 'label': unicode(label, 'utf-8'),
@@ -148,23 +149,6 @@ def infer_location(point, location_query, max_distance, google_key, limit):
         return Location(locations[0]['label'], point, locations)
     else:
         return Location('#?', point, [])
-
-# KB_METHOD = 'KB'
-# GM_METHOD = 'GM'
-# class LocationOption(object):
-#     def __init__(self, label, centroid, distance, method):
-#         self.label = label
-#         self.centroid = centroid
-#         self.distance = distance
-#         self.method = method
-#     def to_json(self):
-#         return {
-#             'label': unicode(label, 'utf-8'),
-#             'distance': self.distance,
-#             'centroid': self.centroid,
-#             'suggestion_type': self.method
-#             }
-
 
 class Location(object):
     """ Location representation

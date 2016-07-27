@@ -340,9 +340,6 @@ class Track(object):
                 siml, diff = segment_similarity(segment, result.object)
                 res_siml.append(siml)
                 res_diff.append((result.id, i, diff))
-                # print(result.id, i, diff)
-
-            # print("seg match", res_siml, res_diff)
 
             if len(res_siml) > 0:
                 final_siml.append(max(res_siml))

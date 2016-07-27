@@ -6,11 +6,6 @@ import pickle
 from sklearn import preprocessing
 from sklearn.linear_model import SGDClassifier
 
-# from random import shuffle
-# import numpy as np
-# import matplotlib.pyplot as plt
-
-
 class Classifier(object):
     """ Transportation mode classifier
 
@@ -106,42 +101,3 @@ class Classifier(object):
             filename (str)
         """
         return pickle.load(filename)
-
-    # def plot(self, colors='rbg', max=10):
-    #     result = []
-    #     X = np.arange(0, max, 0.1)
-    #     for i in X:
-    #         [[a, b, c]] = self.predict([[i]])
-    #         result.append((a, b, c))
-    #     for y in range(3):
-    #         plt.plot(X, map(lambda i: i[y], result), '-' + colors[y])
-
-
-# data = {
-#     'stop': [[0], [0.01], [0.05]],
-#     'walk': [[0.5], [3], [4], [5]],
-#     'car': [[7], [8], [9], [10], [20]]
-#     }
-
-# c = Classifier()
-#
-# data_labels = []
-# data_values = []
-# items = data.items()
-# print(items)
-# items = sorted(items, key=lambda i: i[0])
-# for label, values in items:
-#     for value in values:
-#         data_labels.append(label)
-#         data_values.append(value)
-#
-# print(data_labels, data_values)
-# c.learn(data_values, data_labels)
-# print(c.predict([[10]], verbose=True))
-# c.learn([[1]], ['kid'])
-# print(c.predict([[10]], verbose=True))
-# c.plot(max=30)
-
-
-# plot_clf(clf)
-# plt.show()

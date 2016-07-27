@@ -239,7 +239,6 @@ def segment_similarity(A, B):
         ti1 = B.points[i+1].gen2arr()
         bb = bounding_box_from(B.points, i, i+1)
         intersects = idx.intersection(bb, objects=True)
-        # print("Intersecting %s %s" % (ti, ti1))
         n_prox = []
         i_prox = 0
         a = 0
@@ -250,7 +249,6 @@ def segment_similarity(A, B):
             prox = line_similarity(ti, ti1, pi, pi1)
             i_prox = i_prox + prox
             n_prox.append(prox)
-            # print(pi, pi1, prox)
 
         if a != 0:
             # prox_acc.append(i_prox / a)
