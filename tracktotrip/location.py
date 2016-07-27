@@ -144,7 +144,10 @@ def infer_location(point, location_query, max_distance, google_key, limit):
 
     locations = locations[:limit]
 
-    return Location(locations[0]['label'], point, locations)
+    if len(locations) > 0:
+        return Location(locations[0]['label'], point, locations)
+    else:
+        return Location('#?', point, [])
 
 # KB_METHOD = 'KB'
 # GM_METHOD = 'GM'
