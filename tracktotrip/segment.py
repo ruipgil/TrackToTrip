@@ -2,6 +2,8 @@
 Point segment module
 """
 from copy import deepcopy
+import sys
+import traceback
 
 import numpy as np
 
@@ -31,9 +33,8 @@ def remove_liers(points):
         nxt = points[i+1]
         if prv.time <= crr.time and crr.time <= nxt.time:
             result.append(crr)
-        # else:
-        #     result.append(None)
     result.append(points[-1])
+
     return result
 
 class Segment(object):
@@ -93,16 +94,6 @@ class Segment(object):
         Returns:
             :obj:`Segment`
         """
-        # # self.points = remove_noise(self.points)
-        # points = self.points
-        # accs = [p.acc**2 for p in points]
-        # acc_cum = np.cumsum(accs)
-        # max_acc = 30
-        # window_size = 10
-        # for frame in range(0, (len(points) - window_size)/window_size):
-        #     frame_start = frame
-        #     frame_end = frame + window_size
-        #     # frame_points =
         self.points = remove_liers(self.points)
         return self
 

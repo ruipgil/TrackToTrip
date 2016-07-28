@@ -161,10 +161,6 @@ class Track(object):
         Returns:
             This Track instance
         """
-        # if len(name) != 0:
-        #     name = self.name
-        # else:
-        #     name = self.generate_name(file_format)
 
         self.compute_metrics()
         self.remove_noise()
@@ -179,7 +175,6 @@ class Track(object):
         self.simplify(0, simplify_max_dist_error, simplify_max_speed_error)
 
         self.compute_metrics()
-        # self.name = name
 
         return self
 

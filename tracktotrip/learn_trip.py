@@ -45,7 +45,7 @@ def learn_trip(current, current_id, canonical_trips, insert_canonical, update_ca
     """
 
     if len(canonical_trips) == 0:
-        current.simplify(eps, 0, topology_only=True)
+        current.simplify(eps, 0, 0, topology_only=True)
         insert_canonical(current, current_id)
     else:
         canonical_trips = [

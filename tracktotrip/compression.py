@@ -5,8 +5,13 @@ There are two distinct types:
     - topology based, such as douglas ramer peucker
     - time based, which are represented by td_sp, td_tr and the combination of both, spt
 """
+import sys
 from math import sqrt
 from .point import Point
+
+# All of the compression methods require recursion.
+# Tracks with a huge number of points the default recursion limit (1000) could be a problem
+sys.setrecursionlimit(10000)
 
 I_3600 = 1 / 3600.0
 
