@@ -1,11 +1,10 @@
+changepy==0.1
+gpxpy==1.1.1
+ikalman==0.1.12
 numpy==1.11.0
-gpxpy==1.0.0
-pandas==0.18.1
-pykalman==0.9.5
-python-dateutil==2.5.3
-pytz==2016.4
+requests==2.10.0
 Rtree==0.8.2
 scikit-learn==0.17.1
-scipy==0.17.1
-six==1.10.0
+scipy==0.18.0
 sklearn==0.0
+tracktotrip==0.3
