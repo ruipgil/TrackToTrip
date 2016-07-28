@@ -38,16 +38,6 @@ class Track(object):
         """
         self.name = name
         self.segments = sorted(segments, key=lambda s: s.points[0].time)
-        self.preprocessed = False
-
-    # def start_time(self):
-    #     lastTime = None
-    #     for segment in self.segments:
-    #         if lastTime is None:
-    #             lastTime = segment.getStartTime()
-    #         elif lastTime > segment.getStartTime():
-    #             lastTime = segment.getStartTime()
-    #     return lastTime
 
     def generate_name(self, name_format=DEFAULT_FILE_NAME_FORMAT):
         """ Generates a name for the track
@@ -65,24 +55,22 @@ class Track(object):
             return self.segments[0].points[0].time.strftime(name_format) + ".gpx"
         else:
             return "EmptyTrack"
-    #
-    # def remove_noise(self, var=2):
-    #     """In-place removal of noise points
-    #
-    #     Arguments:
-    #         var: Number to adjust noise removal sensitivity
-    #     Returns:
-    #         This track
-    #     """
-    #     for segment in self.segments:
-    #         segment.removeNoise(var)
-    #     return self
 
-    def smooth(self, strategy, noise):
-        """In-place smoothing of segments
+    def remove_noise(self):
+        """ In-place removal of noise points
 
         Returns:
-            This track
+            :obj:`Track`: self
+        """
+        for segment in self.segments:
+            segment.remove_noise()
+        return self
+
+    def smooth(self, strategy, noise):
+        """ In-place smoothing of segments
+
+        Returns:
+            :obj:`Track`: self
         """
         for segment in self.segments:
             segment.smooth(strategy, noise)
@@ -105,10 +93,12 @@ class Track(object):
         self.segments = new_segments
         return self
 
-    def simplify(self, eps, dist_threshold, topology_only=False):
-        """In-place simplification of segments
+    def simplify(self, eps, max_dist_error, max_speed_error, topology_only=False):
+        """ In-place simplification of segments
 
         Args:
+            max_dist_error (float): Min distance error, in meters
+            max_speed_error (float): Min speed error, in km/h
             topology_only: Boolean, optional. True to keep
                 the topology, neglecting velocity and time
                 accuracy (use common Douglas-Ramen-Peucker).
@@ -118,7 +108,7 @@ class Track(object):
             This track
         """
         for segment in self.segments:
-            segment.simplify(eps, dist_threshold, topology_only)
+            segment.simplify(eps, max_dist_error, max_speed_error, topology_only)
         return self
 
     def infer_transportation_mode(self, clf, min_time):
@@ -143,15 +133,12 @@ class Track(object):
 
     def to_trip(
             self,
-            name,
-            # noise_var=2,
             smooth_strategy,
             smooth_noise,
             seg_eps,
             seg_min_time,
-            simplify_dist_threshold,
-            # simplify_max_time=5,
-            file_format
+            simplify_max_dist_error,
+            simplify_max_speed_error
         ):
         """In-place, transformation of a track into a trip
 
@@ -174,37 +161,26 @@ class Track(object):
         Returns:
             This Track instance
         """
-        if len(name) != 0:
-            name = self.name
-        else:
-            name = self.generate_name(file_format)
+        # if len(name) != 0:
+        #     name = self.name
+        # else:
+        #     name = self.generate_name(file_format)
 
-        # self.removeNoise(noise_var)
+        self.compute_metrics()
+        self.remove_noise()
 
-        self.smooth(smooth_strategy, smooth_noise)
+        self.compute_metrics()
+        self.smooth(smooth_noise, smooth_strategy)
 
         self.compute_metrics()
         self.segment(seg_eps, seg_min_time)
 
         self.compute_metrics()
-        self.simplify(None, simplify_dist_threshold)
+        self.simplify(0, simplify_max_dist_error, simplify_max_speed_error)
 
         self.compute_metrics()
-        self.name = name
+        # self.name = name
 
-        return self
-
-    def preprocess(self, max_acc, destructive=True):
-        """In-place preprocessing of segments
-
-        Args:
-            destructive: Optional, boolean. True to allow point
-                removal. More details in preprocessSegment
-        Returns:
-            This track
-        """
-        self.segments = [segment.preprocess(max_acc, destructive) for segment in self.segments]
-        self.preprocessed = True
         return self
 
     def infer_transportation_modes(self, dt_threshold=10):

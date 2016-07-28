@@ -1,7 +1,14 @@
 """
-Time-distance compression algorithms
+Compression algorithms
+
+There are two distinct types:
+    - topology based, such as douglas ramer peucker
+    - time based, which are represented by td_sp, td_tr and the combination of both, spt
 """
+from math import sqrt
 from .point import Point
+
+I_3600 = 1 / 3600.0
 
 def loc_dist(end, start):
     """ Spatial distance between two points (end-start)
@@ -25,6 +32,63 @@ def time_dist(end, start):
     """
     return end.time_difference(start)
 
+def distance(p_a, p_b):
+    """ Euclidean distance, between two points
+
+    Args:
+        p_a (:obj:`Point`)
+        p_b (:obj:`Point`)
+    Returns:
+        float: distance, in degrees
+    """
+    return sqrt((p_a.lat - p_b.lat) ** 2 + (p_a.lon - p_b.lon) ** 2)
+
+def point_line_distance(point, start, end):
+    """ Distance from a point to a line, formed by two points
+
+    Args:
+        point (:obj:`Point`)
+        start (:obj:`Point`): line point
+        end (:obj:`Point`): line point
+    Returns:
+        float: distance to line, in degrees
+    """
+    if start == end:
+        return distance(point, start)
+    else:
+        un_dist = abs(
+            (end.lat-start.lat)*(start.lon-point.lon) - (start.lat-point.lat)*(end.lon-start.lon)
+        )
+        n_dist = sqrt(
+            (end.lat-start.lat)**2 + (end.lon-start.lon)**2
+        )
+        return un_dist / n_dist
+
+def drp(points, epsilon):
+    """ Douglas ramer peucker
+
+    Based on https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
+
+    Args:
+        points (:obj:`list` of :obj:`Point`)
+        epsilon (float): drp threshold
+    Returns:
+        :obj:`list` of :obj:`Point`
+    """
+    dmax = 0.0
+    index = 0
+
+    for i in range(1, len(points)-1):
+        dist = point_line_distance(points[i], points[0], points[-1])
+        if dist > dmax:
+            index = i
+            dmax = dist
+
+    if dmax > epsilon:
+        return drp(points[:index+1], epsilon)[:-1] + drp(points[index:], epsilon)
+    else:
+        return [points[0], points[-1]]
+
 def td_sp(points, speed_threshold):
     """ Top-Down Speed-Based Trajectory Compression Algorithm
 
@@ -32,7 +96,7 @@ def td_sp(points, speed_threshold):
 
     Args:
         points (:obj:`list` of :obj:`Point`): trajectory or part of it
-        speed_threshold (float): speed threshold
+        speed_threshold (float): max speed error, in km/h
     Returns:
         :obj:`list` of :obj:`Point`, compressed trajectory
     """
@@ -68,7 +132,7 @@ def td_tr(points, dist_threshold):
 
     Args:
         points (:obj:`list` of :obj:`Point`): trajectory or part of it
-        dist_threshold (float): distance threshold
+        dist_threshold (float): max distance error, in meters
     Returns:
         :obj:`list` of :obj:`Point`, compressed trajectory
     """
@@ -77,12 +141,12 @@ def td_tr(points, dist_threshold):
     else:
         max_dist_threshold = 0
         found_index = 0
-        delta_e = time_dist(points[-1], points[0]) / 3600
+        delta_e = time_dist(points[-1], points[0]) * I_3600
         d_lat = points[-1].lat - points[0].lat
         d_lon = points[-1].lon - points[0].lon
 
         for i in range(1, len(points)-1):
-            delta_i = time_dist(points[i], points[0]) / 3600
+            delta_i = time_dist(points[i], points[0]) * I_3600
 
             di_de = delta_i / delta_e
             point = Point(
@@ -129,8 +193,8 @@ def spt(points, max_dist_error, max_speed_error):
         while e < len(points) and not is_error:
             i = 1
             while i < e and not is_error:
-                delta_e = time_dist(points[e], points[0]) / 3600
-                delta_i = time_dist(points[i], points[0]) / 3600
+                delta_e = time_dist(points[e], points[0]) * I_3600
+                delta_i = time_dist(points[i], points[0]) * I_3600
 
                 di_de = delta_i / delta_e
                 d_lat = points[e].lat - points[0].lat

@@ -6,8 +6,8 @@ import numpy as np
 from .point import Point
 from .kalman import kalman_filter
 
-INVERSE_STRATEGY = 0
-EXTRAPOLATE_STRATEGY = 1
+INVERSE_STRATEGY = 'inverse'
+EXTRAPOLATE_STRATEGY = 'extrapolate'
 
 def extrapolate_points(points, n_points):
     """ Extrapolate a number of points, based on the first ones

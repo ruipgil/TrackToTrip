@@ -91,17 +91,38 @@ def detect_changepoints(points, min_time, data_processor=speed_difference):
     """
     data = data_processor(points)
     changepoints = pelt(normal_mean(data, np.std(data)), len(data))
+    changepoints.append(len(points) - 1)
 
     result = []
     for start, end in pairwise(changepoints):
         time_diff = points[end].time_difference(points[start])
-        if time_diff < min_time:
+        if time_diff > min_time:
             result.append(start)
+
     # adds the last changepoint detected
     result.append(changepoints[-1])
-    # adds the last index
-    result.append(len(points) - 1)
-    return list(set(result))
+    return sorted(list(set(result)))
+
+def group_modes(modes):
+    """ Groups consecutive transportation modes with same label, into one
+
+    Args:
+        modes (:obj:`list` of :obj:`dict`)
+    Returns:
+        :obj:`list` of :obj:`dict`
+    """
+    previous = modes[0]
+    grouped = []
+
+    for changep in modes[1:]:
+        if changep['label'] != previous['label']:
+            previous['to'] = changep['from']
+            grouped.append(previous)
+            previous = changep
+
+    previous['to'] = modes[-1]['to']
+    grouped.append(previous)
+    return grouped
 
 def speed_clustering(clf, points, min_time):
     """ Transportation mode infering, based on changepoint segmentation
@@ -133,23 +154,4 @@ def speed_clustering(clf, points, min_time):
                 'label': top_label[-1][0]
                 })
 
-
-    # group based on label
-    previous = cp_info[0]
-    grouped = []
-    # cum_dt = cp_info[0]['dt']
-
-    # TODO: refactor grouping to another function
-
-    for changep in cp_info[1:]:
-        if changep['label'] != previous['label']:# and changep['dt'] > min_time:
-            previous['to'] = changep['from']
-            # previous['dt'] = cum_dt
-            grouped.append(previous)
-            previous = changep
-            # cum_dt = 0
-        # cum_dt = cum_dt + changep['dt']
-    previous['to'] = cp_info[-1]['to']
-    grouped.append(previous)
-
-    return grouped
+    return group_modes(cp_info)

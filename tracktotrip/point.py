@@ -26,6 +26,7 @@ class Point(object):
         self.lat = lat
         self.time = time
         self.dt = .0 #pylint: disable=invalid-name
+        self.dx = .0 #pylint: disable=invalid-name
         self.acc = .0
         self.vel = .0
 
@@ -84,15 +85,17 @@ class Point(object):
             :obj:`Point`: Self
         """
         delta_t = self.time_difference(previous)
+        delta_x = self.distance(previous)
         vel = 0
         delta_v = 0
         acc = 0
         if delta_t != 0:
-            vel = self.distance(previous)/delta_t
+            vel = delta_x/delta_t
             delta_v = vel - previous.vel
             acc = delta_v/delta_t
 
         self.dt = delta_t
+        self.dx = delta_x
         self.acc = acc
         self.vel = vel
         return self

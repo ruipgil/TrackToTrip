@@ -5,17 +5,36 @@ from copy import deepcopy
 
 import numpy as np
 
-from .drp import drp
 from .point import Point
+from .utils import pairwise
 from .smooth import with_extrapolation, with_inverse, INVERSE_STRATEGY, EXTRAPOLATE_STRATEGY
 from .location import infer_location
 from .similarity import sort_segment_points
-from .preprocess import preprocess_segment
-from .td_compression import td_sp
+from .compression import spt, drp
 from .transportation_mode import speed_clustering
 from .spatiotemporal_segmentation import spatiotemporal_segmentation
 
-# from .noise_detection import remove_noise
+def remove_liers(points):
+    """ Removes obvious noise points
+
+    Checks time consistency, removing points that appear out of order
+
+    Args:
+        points (:obj:`list` of :obj:`Point`)
+    Returns:
+        :obj:`list` of :obj:`Point`
+    """
+    result = [points[0]]
+    for i in range(1, len(points) - 2):
+        prv = points[i-1]
+        crr = points[i]
+        nxt = points[i+1]
+        if prv.time <= crr.time and crr.time <= nxt.time:
+            result.append(crr)
+        # else:
+        #     result.append(None)
+    result.append(points[-1])
+    return result
 
 class Segment(object):
     """Holds the points and semantic information about them
@@ -66,17 +85,26 @@ class Segment(object):
 
         return (min_lat, min_lon, max_lat, max_lon)
 
-    # TODO
-    # def removeNoise(self, var=2):
-    #     """In-place removal of noise points
-    #
-    #     Applies removeNoise function to points
-    #
-    #     Returns:
-    #         This segment
-    #     """
-    #     self.points = remove_noise(self.points, var=var)
-    #     return self
+    def remove_noise(self):
+        """In-place removal of noise points
+
+        See `remove_noise` function
+
+        Returns:
+            :obj:`Segment`
+        """
+        # # self.points = remove_noise(self.points)
+        # points = self.points
+        # accs = [p.acc**2 for p in points]
+        # acc_cum = np.cumsum(accs)
+        # max_acc = 30
+        # window_size = 10
+        # for frame in range(0, (len(points) - window_size)/window_size):
+        #     frame_start = frame
+        #     frame_end = frame + window_size
+        #     # frame_points =
+        self.points = remove_liers(self.points)
+        return self
 
     def smooth(self, noise, strategy=INVERSE_STRATEGY):
         """ In-place smoothing
@@ -109,23 +137,24 @@ class Segment(object):
         """
         return spatiotemporal_segmentation(self.points, eps, min_time)
 
-    def simplify(self, eps, dist_threshold, topology_only=False):
+    def simplify(self, eps, max_dist_error, max_speed_error, topology_only=False):
         """ In-place segment simplification
 
-        See drp and td_sp functions
+        See `drp` and `compression` modules
 
         Args:
+            eps (float): Distance threshold for the `drp` function
+            max_dist_error (float): Max distance error, in meters
+            max_speed_error (float): Max speed error, in km/h
             topology_only (bool, optional): True to only keep topology, not considering
                 times when simplifying. Defaults to False.
-            dist_threshold (float, optional): Distance threshold for the td_sp function
-            eps (float, optional): Distance thresgold for the drp function
         Returns:
             :obj:`Segment`
         """
         if topology_only:
             self.points = drp(self.points, eps)
         else:
-            self.points = td_sp(self.points, dist_threshold)
+            self.points = spt(self.points, max_dist_error, max_speed_error)
         return self
 
     def compute_metrics(self):
@@ -134,28 +163,8 @@ class Segment(object):
         Returns:
             :obj:`Segment`: self
         """
-        prev = None
-        for point in self.points:
-            if prev is None:
-                prev = point
-            else:
-                point.compute_metrics(prev)
-                prev = point
-        return self
-
-    def preprocess(self, max_acc, destructive=True):
-        """In-place segment preprocessing
-
-        See preprocess_segment function
-
-        Args:
-            max_acc (float): Max acceleration threshold.
-            destructive (bool, optional): Remove points. Defauts to True
-        Returns:
-            :obj:`Segment`: self
-        """
-        points = preprocess_segment(self.points, max_acc, destructive)
-        self.points = points
+        for prev, point in pairwise(self.points):
+            point.compute_metrics(prev)
         return self
 
     def infer_location(self, location_query, max_distance, google_key, limit):
