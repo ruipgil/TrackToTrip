@@ -7,7 +7,7 @@ from distutils.core import setup
 def read(filename):
     return open(os.path.join(os.path.dirname(__file__), filename)).read()
 
-VERSION='0.3.1'
+VERSION='0.3.2'
 setup(
     name='tracktotrip',
     packages=['tracktotrip'],
