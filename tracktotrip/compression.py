@@ -201,7 +201,9 @@ def spt(points, max_dist_error, max_speed_error):
                 delta_e = time_dist(points[e], points[0]) * I_3600
                 delta_i = time_dist(points[i], points[0]) * I_3600
 
-                di_de = delta_i / delta_e
+                di_de = 0
+                if delta_e != 0:
+                    di_de = delta_i / delta_e
                 d_lat = points[e].lat - points[0].lat
                 d_lon = points[e].lon - points[0].lon
                 point = Point(

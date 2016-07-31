@@ -440,7 +440,7 @@ class Track(object):
                     buff,
                     military_time(segment.points[-1].time),
                     military_time(next_seg.points[0].time),
-                    segment.location_from
+                    segment.location_to
                 )
 
         return buff
