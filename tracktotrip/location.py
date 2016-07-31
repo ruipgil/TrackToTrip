@@ -16,13 +16,13 @@ def compute_centroid(points):
     """ Computes the centroid of set of points
 
     Args:
-        points (:obj:`list` of [float, float])
+        points (:obj:`list` of :obj:`Point`)
     Returns:
-        [float, float]: Latitude and longitude of the centroid
+        :obj:`Point`
     """
     lats = [p[0] for p in points]
     lons = [p[1] for p in points]
-    return [np.mean(lats), np.mean(lons)]
+    return Point(np.mean(lats), np.mean(lons), None)
 
 def update_location_centroid(point, cluster, max_distance, min_samples):
     """ Updates the centroid of a location cluster with another point
@@ -33,11 +33,11 @@ def update_location_centroid(point, cluster, max_distance, min_samples):
         max_distance (float): Max neighbour distance
         min_samples (int): Minimum number of samples
     Returns:
-        ([float, float], :obj:`list` of :obj:`Point`): Tuple with the location centroid
+        (:obj:`Point`, :obj:`list` of :obj:`Point`): Tuple with the location centroid
             and new point cluster (given cluster + given point)
     """
+    cluster.append(point)
     points = [p.gen2arr() for p in cluster]
-    points.append(point.gen2arr())
 
     # Estimates the epsilon
     eps = estimate_meters_to_deg(sqrt(max_distance), precision=5)
@@ -47,32 +47,27 @@ def update_location_centroid(point, cluster, max_distance, min_samples):
 
     clusters = {}
     for i, label in enumerate(p_cluster.labels_):
-        c_point = points[i]
         if label in clusters.keys():
-            clusters[label].append(c_point)
+            clusters[label].append(points[i])
         else:
-            clusters[label] = [c_point]
+            clusters[label] = [points[i]]
 
     centroids = []
     biggest_centroid_l = -float("inf")
     biggest_centroid = None
 
-    for label, cluster in clusters.items():
-        centroid = compute_centroid(cluster)
+    for label, n_cluster in clusters.items():
+        centroid = compute_centroid(n_cluster)
         centroids.append(centroid)
 
-        if label >= 0 and len(cluster) >= biggest_centroid_l:
-            biggest_centroid_l = len(cluster)
+        if label >= 0 and len(n_cluster) >= biggest_centroid_l:
+            biggest_centroid_l = len(n_cluster)
             biggest_centroid = centroid
 
     if biggest_centroid is None:
-        biggest_centroid = compute_centroid(points)
+        biggest_centroid = compute_centroid(cluster)
 
-        points = [Point(p[0], p[1], None) for p in points]
-        centroid_point = Point(biggest_centroid[0], biggest_centroid[1], None)
-        return centroid_point, points
-    else:
-        return point, cluster
+    return biggest_centroid, cluster
 
 
 def query_google(point, max_distance, key):
