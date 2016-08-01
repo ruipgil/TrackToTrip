@@ -99,8 +99,10 @@ def detect_changepoints(points, min_time, data_processor=speed_difference):
         if time_diff > min_time:
             result.append(start)
 
+    # adds the first point
+    result.append(0)
     # adds the last changepoint detected
-    result.append(changepoints[-1])
+    result.append(len(points) - 1)
     return sorted(list(set(result)))
 
 def group_modes(modes):
@@ -111,18 +113,21 @@ def group_modes(modes):
     Returns:
         :obj:`list` of :obj:`dict`
     """
-    previous = modes[0]
-    grouped = []
+    if len(modes) > 0:
+        previous = modes[0]
+        grouped = []
 
-    for changep in modes[1:]:
-        if changep['label'] != previous['label']:
-            previous['to'] = changep['from']
-            grouped.append(previous)
-            previous = changep
+        for changep in modes[1:]:
+            if changep['label'] != previous['label']:
+                previous['to'] = changep['from']
+                grouped.append(previous)
+                previous = changep
 
-    previous['to'] = modes[-1]['to']
-    grouped.append(previous)
-    return grouped
+        previous['to'] = modes[-1]['to']
+        grouped.append(previous)
+        return grouped
+    else:
+        return modes
 
 def speed_clustering(clf, points, min_time):
     """ Transportation mode infering, based on changepoint segmentation
