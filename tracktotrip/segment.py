@@ -158,7 +158,15 @@ class Segment(object):
             point.compute_metrics(prev)
         return self
 
-    def infer_location(self, location_query, max_distance, google_key, limit):
+    def infer_location(
+            self,
+            location_query,
+            max_distance,
+            google_key,
+            foursquare_client_id,
+            foursquare_client_secret,
+            limit
+        ):
         """In-place location inferring
 
         See infer_location function
@@ -171,16 +179,20 @@ class Segment(object):
         self.location_from = infer_location(
             self.points[0],
             location_query,
-            max_distance=max_distance,
-            google_key=google_key,
-            limit=limit
+            max_distance,
+            google_key,
+            foursquare_client_id,
+            foursquare_client_secret,
+            limit
         )
         self.location_to = infer_location(
             self.points[-1],
             location_query,
-            max_distance=max_distance,
-            google_key=google_key,
-            limit=limit
+            max_distance,
+            google_key,
+            foursquare_client_id,
+            foursquare_client_secret,
+            limit
         )
 
         return self

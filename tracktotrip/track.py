@@ -196,6 +196,8 @@ class Track(object):
             location_query,
             max_distance,
             google_key,
+            foursquare_client_id,
+            foursquare_client_secret,
             limit
         ):
         """In-place location inferring of segments
@@ -204,7 +206,14 @@ class Track(object):
             This track
         """
         self.segments = [
-            segment.infer_location(location_query, max_distance, google_key, limit)
+            segment.infer_location(
+                location_query,
+                max_distance,
+                google_key,
+                foursquare_client_id,
+                foursquare_client_secret,
+                limit
+            )
             for segment in self.segments
             ]
         return self
@@ -407,7 +416,7 @@ class Track(object):
             t_modes = segment.transportation_modes
             if len(t_modes) == 1:
                 trip = "%s [%s]" % (trip, t_modes[0]['label'])
-            else:
+            elif len(t_modes) > 1:
                 modes = []
                 for mode in t_modes:
                     trip_from = military_time(segment.points[mode['from']].time)
@@ -430,7 +439,7 @@ class Track(object):
             if i is last:
                 buff = stay(
                     buff,
-                    military_time(segment.points[0].time),
+                    military_time(segment.points[-1].time),
                     "2359",
                     segment.location_to
                 )

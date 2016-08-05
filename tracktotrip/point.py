@@ -129,7 +129,7 @@ class Point(object):
         return {
             'lat': self.lat,
             'lon': self.lon,
-            'time': self.time.isoformat()
+            'time': self.time.isoformat() if self.time is not None else None
         }
 
     @staticmethod

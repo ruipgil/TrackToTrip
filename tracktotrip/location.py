@@ -12,6 +12,11 @@ from .utils import estimate_meters_to_deg
 GOOGLE_PLACES_URL = 'https://maps.googleapis.com/maps/api/place/nearbysearch' \
     '/json?location=%s,%s&radius=%s&key=%s'
 
+FOURSQUARE_URL = 'https://api.foursquare.com/v2/venues/search?' \
+        'v=20140806&m=foursquare&' \
+        'client_id=%s&client_secret=%s&' \
+        'll=%f,%f&radius=%f'
+
 def compute_centroid(points):
     """ Computes the centroid of set of points
 
@@ -69,6 +74,51 @@ def update_location_centroid(point, cluster, max_distance, min_samples):
 
     return biggest_centroid, cluster
 
+def query_foursquare(point, max_distance, client_id, client_secret):
+    """ Queries Squarespace API for a location
+
+    Args:
+        point (:obj:`Point`): Point location to query
+        max_distance (float): Search radius, in meters
+        client_id (str): Valid Foursquare client id
+        client_secret (str): Valid Foursquare client secret
+    Returns:
+        :obj:`list` of :obj:`dict`: List of locations with the following format:
+            {
+                'label': 'Coffee house',
+                'distance': 19,
+                'types': 'Commerce',
+                'suggestion_type': 'FOURSQUARE'
+            }
+    """
+    if not client_id:
+        return []
+    if not client_secret:
+        return []
+
+    url = FOURSQUARE_URL % (client_id, client_secret, point.lat, point.lon, max_distance)
+    req = requests.get(url)
+
+    if req.status_code != 200:
+        return []
+    response = req.json()
+
+    result = []
+    venues = response['response']['venues']
+
+    for venue in venues:
+        name = venue['name']
+        distance = venue['location']['distance']
+        categories = [c['shortName'] for c in venue['categories']]
+        result.append({
+            'label': name,
+            'distance': distance,
+            'types': categories,
+            'suggestion_type': 'FOURSQUARE'
+        })
+
+    return sorted(result, key=lambda elm: elm['distance'])
+
 
 def query_google(point, max_distance, key):
     """ Queries google maps API for a location
@@ -110,7 +160,15 @@ def query_google(point, max_distance, key):
             })
     return final_results
 
-def infer_location(point, location_query, max_distance, google_key, limit):
+def infer_location(
+        point,
+        location_query,
+        max_distance,
+        google_key,
+        foursquare_client_id,
+        foursquare_client_secret,
+        limit
+    ):
     """ Infers the semantic location of a (point) place.
 
     Args:
@@ -118,6 +176,8 @@ def infer_location(point, location_query, max_distance, google_key, limit):
         location_query: Function with signature, (:obj:`Point`, int) -> (str, :obj:`Point`, ...)
         max_distance (float): Max distance to a position, in meters
         google_key (str): Valid google maps api key
+        foursquare_client_id (str): Valid Foursquare client id
+        foursquare_client_secret (str): Valid Foursquare client secret
         limit (int): Results limit
     Returns:
         :obj:`Location`: with top match, and alternatives
@@ -136,8 +196,17 @@ def infer_location(point, location_query, max_distance, google_key, limit):
         locations = sorted(locations, key=lambda d: d['distance'])
 
     if len(locations) <= limit:
-        google_locs = query_google(point, max_distance, google_key)
-        locations.extend(google_locs)
+        if google_key:
+            google_locs = query_google(point, max_distance, google_key)
+            locations.extend(google_locs)
+        if foursquare_client_id and foursquare_client_secret:
+            foursquare_locs = query_foursquare(
+                point,
+                max_distance,
+                foursquare_client_id,
+                foursquare_client_secret
+            )
+            locations.extend(foursquare_locs)
 
     locations = locations[:limit]
 
