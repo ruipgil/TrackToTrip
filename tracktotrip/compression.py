@@ -67,7 +67,10 @@ def point_line_distance(point, start, end):
         n_dist = sqrt(
             (end.lat-start.lat)**2 + (end.lon-start.lon)**2
         )
-        return un_dist / n_dist
+        if n_dist == 0:
+            return 0
+        else:
+            return un_dist / n_dist
 
 def drp(points, epsilon):
     """ Douglas ramer peucker

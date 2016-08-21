@@ -37,6 +37,7 @@ class Track(object):
             segments(:obj:`list` of :obj:`Segment`)
         """
         self.name = name
+        self.meta = []
         self.segments = sorted(segments, key=lambda s: s.points[0].time)
 
     def generate_name(self, name_format=DEFAULT_FILE_NAME_FORMAT):
@@ -226,7 +227,8 @@ class Track(object):
         """
         return {
             'name': self.name,
-            'segments': [segment.to_json() for segment in self.segments]
+            'segments': [segment.to_json() for segment in self.segments],
+            'meta': self.meta
             }
 
     # TODO

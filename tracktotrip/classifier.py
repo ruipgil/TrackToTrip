@@ -3,6 +3,7 @@ MIT License
 """
 
 import pickle
+import numpy as np
 from sklearn import preprocessing
 from sklearn.linear_model import SGDClassifier
 
@@ -17,7 +18,7 @@ class Classifier(object):
         feature_length (int): Length of each feature. <0 if it hasn't learned any
     """
     def __init__(self):
-        self.clf = SGDClassifier(loss="log", penalty="l1", shuffle=True)
+        self.clf = SGDClassifier(loss="log", penalty="l2", shuffle=True, n_iter=2500)
         self.labels = preprocessing.LabelEncoder()
         self.feature_length = -1
 
@@ -48,6 +49,7 @@ class Classifier(object):
             labels (:obj:`list` of :obj:`str`): Labels for each set of features.
                 New features are learnt.
         """
+        labels = np.ravel(labels)
         self.__learn_labels(labels)
         labels = self.labels.transform(labels)
         if self.feature_length > 0:
@@ -56,6 +58,11 @@ class Classifier(object):
         else:
             self.clf = self.clf.fit(features, labels)
             self.feature_length = len(features[0])
+
+    def score(self, features, labels):
+        labels = self.labels.transform(labels)
+        return self.clf.score(features, labels)
+
 
     def predict(self, features, verbose=False):
         """ Probability estimates of each feature

@@ -41,11 +41,11 @@ def isostr_to_datetime(dt_str):
     Returns:
         :obj:`datetime.datetime`
     """
-    return datetime.datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%SZ")
-    # delta_t, _, us_m = dt_str.partition(".")
-    # delta_t = datetime.datetime.strptime(delta_t, "%Y-%m-%dT%H:%M:%S")
-    # us_m = int(us_m.rstrip("Z"), 10)
-    # return delta_t + datetime.timedelta(microseconds=us_m)
+    if len(dt_str) <= 20:
+        return datetime.datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%SZ")
+    else:
+        dt_str = dt_str.split(".")
+        return isostr_to_datetime("%sZ" % dt_str[0])
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."

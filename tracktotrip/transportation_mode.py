@@ -6,6 +6,54 @@ from changepy import pelt
 from changepy.costs import normal_mean
 from .utils import pairwise
 
+MAX_VEL = 1000.0
+
+def cum_prob(histogram, steps):
+    steps = sorted(steps)
+    step_i = 0
+    prob = 0.0
+    result = []
+    for i, val in enumerate(histogram):
+        prob = prob + val
+        while True:
+            if prob > steps[step_i]:
+                step_i = step_i + 1
+                result.append(i)
+                if len(result) == len(steps):
+                    return result
+            else:
+                break
+    return np.array(result) / MAX_VEL
+
+def normalize(histogram):
+    total = float(sum(histogram))
+    if total == 0:
+        return [0]
+    return [x / total for x in histogram]
+
+def build_histogram(points):
+    max_bin = -1
+    for point in points:
+        max_bin = max(max_bin, point.vel)
+    max_bin = int(round(max_bin)) + 1
+
+    # inits histogram
+    histogram = [0] * max_bin
+    time = 0
+
+    # fills histogram
+    for point in points:
+        bin_index = int(round(point.vel))
+        histogram[bin_index] += point.dt
+        time += point.dt
+
+    return histogram
+
+def extract_features_2(points):
+    hist = build_histogram(points)
+    norm = normalize(hist)
+    return cum_prob(norm, list(reversed([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])))
+
 def learn_transportation_mode(track, clf):
     """ Inserts transportation modes of a track into a classifier
 
@@ -22,7 +70,7 @@ def learn_transportation_mode(track, clf):
         for tmode in tmodes:
             points_part = points[tmode['from']:tmode['to']]
             if len(points_part) > 0:
-                features.append(extract_features(points_part, clf.feature_length/2))
+                features.append(extract_features_2(points_part))
                 labels.append(tmode['label'])
 
         clf.learn(features, labels)
@@ -129,6 +177,21 @@ def group_modes(modes):
     else:
         return modes
 
+def classify(clf, points, min_time, from_index = None, to_index = None):
+    features = extract_features_2(points)
+    print(len(points), features)
+    if len(features) > 0:
+        [probs] = clf.predict([features], verbose=True)
+        top_label = sorted(probs.items(), key=lambda val: val[1])
+        return {
+            'from': from_index,
+            'to': to_index,
+            'classification': probs,
+            'label': top_label[-1][0]
+            }
+    return None
+
+
 def speed_clustering(clf, points, min_time):
     """ Transportation mode infering, based on changepoint segmentation
 
@@ -148,15 +211,8 @@ def speed_clustering(clf, points, min_time):
     for i in range(0, len(changepoints) - 1):
         from_index = changepoints[i]
         to_index = changepoints[i+1]
-        features = extract_features(points[from_index:to_index], clf.feature_length/2)
-        if len(features) > 0:
-            [probs] = clf.predict([features], verbose=True)
-            top_label = sorted(probs.items(), key=lambda val: val[1])
-            cp_info.append({
-                'from': from_index,
-                'to': to_index,
-                'classification': probs,
-                'label': top_label[-1][0]
-                })
+        info = classify(clf, points[from_index:to_index], min_time, from_index, to_index)
+        if info:
+            cp_info.append(info)
 
     return group_modes(cp_info)

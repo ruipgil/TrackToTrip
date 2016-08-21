@@ -70,7 +70,7 @@ def update_location_centroid(point, cluster, max_distance, min_samples):
             biggest_centroid = centroid
 
     if biggest_centroid is None:
-        biggest_centroid = compute_centroid(cluster)
+        biggest_centroid = compute_centroid(points)
 
     return biggest_centroid, cluster
 
