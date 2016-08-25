@@ -51,6 +51,9 @@ class Classifier(object):
         """
         labels = np.ravel(labels)
         self.__learn_labels(labels)
+        if len(labels) == 0:
+            return
+
         labels = self.labels.transform(labels)
         if self.feature_length > 0:
             # FIXME? check docs, may need to pass class=[...]
