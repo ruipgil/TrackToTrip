@@ -352,18 +352,30 @@ class Track(object):
         Returns:
             A string with the GPX/XML track
         """
-        gpx = gpxpy.gpx.GPX()
-        gpx_track = gpxpy.gpx.GPXTrack()
-        gpx.tracks.append(gpx_track)
-
+        gpx_segments = []
         for segment in self.segments:
-            gpx_segment = gpxpy.gpx.GPXTrackSegment()
-            gpx_track.segments.append(gpx_segment)
-
+            gpx_points = []
             for point in segment.points:
-                gpx_point = gpxpy.gpx.GPXTrackPoint(point.lat, point.lon, time=point.time)
-                gpx_segment.points.append(gpx_point)
-        return gpx.to_xml()
+                time = ''
+                if point.time:
+                    iso_time = point.time.isoformat().split('.')[0]
+                    time = '<time>%s</time>' % iso_time
+                gpx_points.append(
+                    u'<trkpt lat="%f" lon="%f">%s</trkpt>' % (point.lat, point.lon, time)
+                )
+            points = u'\n\t\t\t'.join(gpx_points)
+            gpx_segments.append(u'\t\t<trkseg>\n\t\t\t%s\n\t\t</trkseg>' % points)
+        segments = u'\t\n'.join(gpx_segments)
+        content = [
+            u'<?xml version="1.0" encoding="UTF-8"?>',
+            u'<gpx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/0" xsi:schemaLocation="http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd" version="1.0" creator="GatherMySteps">',
+            u'\t<trk>',
+            segments,
+            u'\t</trk>',
+            u'</gpx>'
+        ]
+
+        return u'\n'.join(content)
 
     def to_life(self):
         """Converts track to LIFE format
