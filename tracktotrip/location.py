@@ -25,8 +25,8 @@ def compute_centroid(points):
     Returns:
         :obj:`Point`
     """
-    lats = [p[0] for p in points]
-    lons = [p[1] for p in points]
+    lats = [p[1] for p in points]
+    lons = [p[0] for p in points]
     return Point(np.mean(lats), np.mean(lons), None)
 
 def update_location_centroid(point, cluster, max_distance, min_samples):
@@ -45,7 +45,7 @@ def update_location_centroid(point, cluster, max_distance, min_samples):
     points = [p.gen2arr() for p in cluster]
 
     # Estimates the epsilon
-    eps = estimate_meters_to_deg(sqrt(max_distance), precision=5)
+    eps = estimate_meters_to_deg(max_distance, precision=6)
 
     p_cluster = DBSCAN(eps=eps, min_samples=min_samples)
     p_cluster.fit(points)

@@ -124,7 +124,10 @@ def closest_point(a, b, p):
     ab = [b[0]-a[0], b[1]-a[1]]
     mag = float(ab[0]**2 + ab[1]**2)
     proj = dot(ap, ab)
-    dist = proj / mag
+    if mag ==0 :
+        dist = 0
+    else:
+        dist = proj / mag
     if dist < 0:
         return [a[0], a[1]]
     elif dist > 1:
