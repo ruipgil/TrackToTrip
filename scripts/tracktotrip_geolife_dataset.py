@@ -1,3 +1,4 @@
+#!/bin/env python
 """
 GeoLife dataset downloader and extractor
 """

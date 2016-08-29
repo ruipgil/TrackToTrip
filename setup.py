@@ -5,9 +5,11 @@ import os
 from distutils.core import setup
 
 def read(filename):
+    """ Reads file
+    """
     return open(os.path.join(os.path.dirname(__file__), filename)).read()
 
-VERSION='0.3.4'
+VERSION = '0.4.0'
 setup(
     name='tracktotrip',
     packages=['tracktotrip'],
@@ -19,5 +21,12 @@ setup(
     download_url='https://github.com/ruipgil/TrackToTrip/releases/tag/%s' % VERSION,
     keywords=['track', 'trip', 'GPS', 'GPX'],
     classifiers=[],
+    license=read('LICENSE'),
+    long_description=read('README.md'),
+    scripts=[
+        'scripts/tracktotrip_util',
+        'scripts/tracktotrip_build_classifier',
+        'scripts/tracktotrip_geolife_dataset'
+    ],
     install_requires=read('requirements.txt').split('\n')
 )
