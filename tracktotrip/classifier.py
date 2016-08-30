@@ -17,8 +17,11 @@ class Classifier(object):
         labels (:obj:`LabelEncoder`): Label encoder, includes all the labels
         feature_length (int): Length of each feature. <0 if it hasn't learned any
     """
-    def __init__(self):
-        self.clf = SGDClassifier(loss="log", penalty="l2", shuffle=True, n_iter=2500)
+    def __init__(self, classifier=None):
+        if classifier:
+            self.clf = classifier
+        else:
+            self.clf = SGDClassifier(loss="log", penalty="l2", shuffle=True, n_iter=2500)
         self.labels = preprocessing.LabelEncoder()
         self.feature_length = -1
 
@@ -55,7 +58,7 @@ class Classifier(object):
             return
 
         labels = self.labels.transform(labels)
-        if self.feature_length > 0:
+        if self.feature_length > 0 and hasattr(self.clf, 'partial_fit'):
             # FIXME? check docs, may need to pass class=[...]
             self.clf = self.clf.partial_fit(features, labels)
         else:
@@ -65,7 +68,6 @@ class Classifier(object):
     def score(self, features, labels):
         labels = self.labels.transform(labels)
         return self.clf.score(features, labels)
-
 
     def predict(self, features, verbose=False):
         """ Probability estimates of each feature
