@@ -104,10 +104,10 @@ A Point holds the position and time. Currently the library doesn't support eleva
 
 For transportation mode classification, TrackToTrip uses a wrapper around sklearn's classifiers. We consider two different classifiers: the [Stochastic Gradient Descent Classifier](http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDClassifier.html#sklearn.linear_model.SGDClassifier), and [CART Decision Tree Classifier](http://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier), both implemented by [sklearn](http://scikit-learn.org/).
 
-To classify a segment (group of tracks) we first do changepoint segmentation, which sub-divides a segment into points where there was a change in mean the absolute velocity difference.
+To classify a segment (trip) we first do changepoint segmentation, which sub-divides a segment into points where there was a change in mean the absolute velocity difference.
 For each sub-segment we then extract features.
 
-Feature extraction is based on cumulative speed, and the amount of time spent at them. We create a histogram, where the bins the velocity (rounded) and the bin values are the percentage of time spent at a certain velocity (bin 10 is 10km/h). Then we create a cumulative histogram, and extract the velocities where the cumulative value surpasses 10, 20 to 90% of the time.
+Feature extraction is based on cumulative speed, and the amount of time spent at them. We create a [histogram](../master/docs/histogram.pdf), where the bins the velocity (rounded) and the bin values are the percentage of time spent at a certain velocity (bin 10 is 10km/h). Then we create a [cumulative histogram](../master/docs/cum_histograms.pdf), and extract the velocities where the cumulative value surpasses 10, 20 to 90% of the time.
 
 For instance, for a sub-division marked as *walk*, we get the features:
 
@@ -124,11 +124,11 @@ We used the labels: *foot*, *airplane*, *train* and (motor) *vehicle*. The foot 
   + Transportation modes that belong to the same category. *Taxi*, *car* and *bus* are similar transportation modes, with a similar feature set.
 We also don't use tracks marked as *boat* and *bike*. Because there's only seven *boat* samples, and because *bike* features are reduce the quality of classification and is rarely used by us.
 
-You can check the [average histograms](../master/docs/histogram.pdf) and [cumulative average histograms](../master/docs/cum_histograms.pdf) for the GeoLife dataset.
-
 To evaluate the classifiers we perform [two-fold validation](../master/scripts/two_fold_validation.py) with a 50% split of the data.
 
-Using a SGD Classifier obtain a score between 84% and 86% (we use random permutation during training). Using a decision tree we obtain a score of 83%. [The ` classification_validation.txt ` file offers more details](../master/docs/classification_validation.txt'). Using *bike* data the scores is lowered to ~70%.
+Using a SGD Classifier obtain a score between 84% and 86% (we use random permutation during training). Using a decision tree we obtain a score of 83%. These values drop to around 70% using the *bike* labels.
+
+[The ` classification_validation.txt ` file offers more details](../master/docs/classifier_validation.txt).
 
 ## Command line tools
 
