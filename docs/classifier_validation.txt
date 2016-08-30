@@ -1,0 +1,100 @@
+Labels to use:
+  foot (4113 samples) aliased from: run (4 samples), walk (4109 samples)
+  airplane (14 samples)
+  train (811 samples) aliased from: subway (620 samples)
+  vehicle (3249 samples) aliased from: taxi (526 samples), bus (1897 samples), motorcycle (2 samples), car (824 samples)
+
+Labels not used: bike (1582 samples), boat (7 samples)
+
+========================================
+
+Split A (train: #4095, test: #4092)
+SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
+       eta0=0.0, fit_intercept=True, l1_ratio=0.15,
+       learning_rate='optimal', loss='log', n_iter=2500, n_jobs=1,
+       penalty='l2', power_t=0.5, random_state=None, shuffle=True,
+       verbose=0, warm_start=False)
+
+             precision    recall  f1-score   support
+
+   airplane       0.88      1.00      0.93         7
+       foot       0.88      0.95      0.91      2056
+      train       0.31      0.02      0.04       405
+    vehicle       0.76      0.86      0.81      1624
+
+avg / total       0.78      0.82      0.79      4092
+
+Training time: 3.559772s
+Predicting time: 0.003526s
+Mean squared error: 0.405914
+Score: 0.822581
+
+----------------------------------------
+
+Split B (train: #4092, test: #4095)
+SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
+       eta0=0.0, fit_intercept=True, l1_ratio=0.15,
+       learning_rate='optimal', loss='log', n_iter=2500, n_jobs=1,
+       penalty='l2', power_t=0.5, random_state=None, shuffle=True,
+       verbose=0, warm_start=False)
+
+             precision    recall  f1-score   support
+
+   airplane       1.00      0.43      0.60         7
+       foot       0.92      0.96      0.94      2057
+      train       0.83      0.16      0.27       406
+    vehicle       0.81      0.93      0.87      1625
+
+avg / total       0.87      0.87      0.84      4095
+
+Training time: 3.161249s
+Predicting time: 0.003893s
+Mean squared error: 0.263980
+Score: 0.869841
+
+Average score was 0.846211
+========================================
+
+Split A (train: #4095, test: #4092)
+DecisionTreeClassifier(class_weight=None, criterion='gini', max_depth=None,
+            max_features=None, max_leaf_nodes=None, min_samples_leaf=1,
+            min_samples_split=2, min_weight_fraction_leaf=0.0,
+            presort=False, random_state=None, splitter='best')
+
+             precision    recall  f1-score   support
+
+   airplane       0.70      1.00      0.82         7
+       foot       0.88      0.92      0.90      2056
+      train       0.61      0.46      0.52       405
+    vehicle       0.83      0.83      0.83      1624
+
+avg / total       0.83      0.84      0.83      4092
+
+Training time: 0.017156s
+Predicting time: 0.002712s
+Mean squared error: 0.401271
+Score: 0.838465
+
+----------------------------------------
+
+Split B (train: #4092, test: #4095)
+DecisionTreeClassifier(class_weight=None, criterion='gini', max_depth=None,
+            max_features=None, max_leaf_nodes=None, min_samples_leaf=1,
+            min_samples_split=2, min_weight_fraction_leaf=0.0,
+            presort=False, random_state=None, splitter='best')
+
+             precision    recall  f1-score   support
+
+   airplane       1.00      0.43      0.60         7
+       foot       0.89      0.96      0.92      2057
+      train       0.39      0.45      0.42       406
+    vehicle       0.88      0.76      0.81      1625
+
+avg / total       0.84      0.83      0.83      4095
+
+Training time: 0.013183s
+Predicting time: 0.002780s
+Mean squared error: 0.312576
+Score: 0.827839
+
+Average score was 0.833152

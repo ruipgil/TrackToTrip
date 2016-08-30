@@ -72,16 +72,16 @@ A Point holds the position and time. Currently the library doesn't support eleva
 + [`tracktotrip.classifer.Classifier`](../master/tracktotrip/classifier.py) provides a wrapper around the [sklearn](http://scikit-learn.org/) classifiers.
 
 + [`tracktotrip.compression`](../master/tracktotrip/classifier.py) implements path compression algorithm, such as:
-	- ` drp `: Douglas Ramer Peucker Algorithm
-	- ` td_sp `: Top-Down Speed-Based Trajectory Compression Algorithm [1]
-	- ` td_tr `: Top-Down Time-Ratio Trajectory Compression Algorithm [1]
-	- ` spt `: A combination of both `td_sp` and `td_tr` [1]
+  - ` drp `: Douglas Ramer Peucker Algorithm
+  - ` td_sp `: Top-Down Speed-Based Trajectory Compression Algorithm [1]
+  - ` td_tr `: Top-Down Time-Ratio Trajectory Compression Algorithm [1]
+  - ` spt `: A combination of both `td_sp` and `td_tr` [1]
 
 + [`tracktotrip.kalman.kalman_filter`](../master/tracktotrip/classifier.py) executes the kalman filter in a list of point
 
 + [`tracktotrip.learn_trip`](../master/tracktotrip/classifier.py) implements
-	- ` trip_learn ` used learn trips
-	- ` complete_trip ` used to find trips between two points
+  - ` trip_learn ` used learn trips
+  - ` complete_trip ` used to find trips between two points
 
 + [`tracktotrip.location.infer_location`](../master/tracktotrip/classifier.py) uses known locations, and web APIs such as Google's and Foursquare's.
 
@@ -92,13 +92,43 @@ A Point holds the position and time. Currently the library doesn't support eleva
 + [`tracktotrip.spatiotemporal_segmentation.spatiotemporal_segmentation`](../master/tracktotrip/classifier.py) uses the DBSCAN algorithm to perform spatiotemporal segmentation
 
 + [`tracktotrip.transportation_mode`](../master/tracktotrip/classifier.py) implements transportation learning and prediction functions, such as:
-	- `extract_features_2` to extract features from a set of points
-	- `learn_transportation_mode` to learn the transportation modes of a track
-	- `speed_clustering` implements changepoint segmentation and classifies sub-segments between changepoints
+  - `extract_features_2` to extract features from a set of points
+  - `learn_transportation_mode` to learn the transportation modes of a track
+  - `speed_clustering` implements changepoint segmentation and classifies sub-segments between changepoints
 
 *TrackToTrip* is flexible, with lots of parameters. For general parameters, refer to [` processmysteps.default_config `](https://github.com/ruipgil/ProcessMySteps/blob/master/processmysteps/default_config.py)
 
 [1]: Spatiotemporal Compression Techniques for Moving Point Objects, Nirvana Meratnia and Rolf A. de By, 2004, in Advances in Database Technology - EDBT 2004: 9th International Conference on Extending Database Technology, Heraklion, Crete, Greece, March 14-18, 2004
+
+## Transportation mode classification
+
+For transportation mode classification, TrackToTrip uses a wrapper around sklearn's classifiers. We consider two different classifiers: the [Stochastic Gradient Descent Classifier](http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDClassifier.html#sklearn.linear_model.SGDClassifier), and [CART Decision Tree Classifier](http://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier), both implemented by [sklearn](http://scikit-learn.org/).
+
+To classify a segment (group of tracks) we first do changepoint segmentation, which sub-divides a segment into points where there was a change in mean the absolute velocity difference.
+For each sub-segment we then extract features.
+
+Feature extraction is based on cumulative speed, and the amount of time spent at them. We create a histogram, where the bins the velocity (rounded) and the bin values are the percentage of time spent at a certain velocity (bin 10 is 10km/h). Then we create a cumulative histogram, and extract the velocities where the cumulative value surpasses 10, 20 to 90% of the time.
+
+For instance, for a sub-division marked as *walk*, we get the features:
+
+```
+[0, 0, 1, 1, 2, 2, 2, 3, 3]
+```
+
+This means that 90% (index 8)  of the velocity is 3km/h, and 50% (index 4) of the sub-division was spent below 2km/h.
+
+To train the default classifier we used the [GeoLife GPS Trajectories](https://www.microsoft.com/en-us/download/details.aspx?id=52367) dataset. We provide command line scripts to download the dataset and transform it to GPX.
+
+We used the labels: *foot*, *airplane*, *train* and (motor) *vehicle*. The foot label includes data marked as *run* and *walk*. The train label is composed of data marked as *train* and *subway*. And the *vehicle* label is the combination of *taxi*, *bus*, *motorcycle* and *car* samples. We compressed the possible labels because of two factors:
+  + Lack of relevant data. Only 4 samples were marked as *run*;
+  + Transportation modes that belong to the same category. *Taxi*, *car* and *bus* are similar transportation modes, with a similar feature set.
+We also don't use tracks marked as *boat* and *bike*. Because there's only seven *boat* samples, and because *bike* features are reduce the quality of classification and is rarely used by us.
+
+You can check the [average histograms](../master/docs/histogram.pdf) and [cumulative average histograms](../master/docs/cum_histograms.pdf) for the GeoLife dataset.
+
+To evaluate the classifiers we perform [two-fold validation](../master/scripts/two_fold_validation.py) with a 50% split of the data.
+
+Using a SGD Classifier obtain a score between 84% and 86% (we use random permutation during training). Using a decision tree we obtain a score of 83%. [The ` classification_validation.txt ` file offers more details](../master/docs/classification_validation.txt'). Using *bike* data the scores is lowered to ~70%.
 
 ## Command line tools
 
