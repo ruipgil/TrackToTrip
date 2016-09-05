@@ -126,7 +126,20 @@ def speed_difference(points):
         data.append(before.vel - after.vel)
     return data
 
-def detect_changepoints(points, min_time, data_processor=speed_difference):
+def acc_difference(points):
+    """ Computes the accelaration difference between each adjacent point
+
+    Args:
+        points (:obj:`Point`)
+    Returns:
+        :obj:`list` of int: Indexes of changepoints
+    """
+    data = [0]
+    for before, after in pairwise(points):
+        data.append(before.acc - after.acc)
+    return data
+
+def detect_changepoints(points, min_time, data_processor=acc_difference):
     """ Detects changepoints on points that have at least a specific duration
 
     Args:

@@ -6,6 +6,7 @@ import numpy as np
 from .point import Point
 from .kalman import kalman_filter
 
+NO_STRATEGY = 'no strategy'
 INVERSE_STRATEGY = 'inverse'
 EXTRAPOLATE_STRATEGY = 'extrapolate'
 
@@ -53,6 +54,18 @@ def with_extrapolation(points, noise, n_points):
         :obj:`list` of :obj:`Point`
     """
     return kalman_filter(extrapolate_points(points, n_points) + points, noise)[n_points:]
+
+def with_no_strategy(points, noise):
+    """ Smooths a set of points using just the kalman filter
+
+    Args:
+        points (:obj:`list` of :obj:`Point`)
+        noise (float): Expected noise, the higher it is the more the path will
+            be smoothed.
+    Returns:
+        :obj:`list` of :obj:`Point`
+    """
+    return kalman_filter(points, noise)
 
 def with_inverse(points, noise):
     """ Smooths a set of points

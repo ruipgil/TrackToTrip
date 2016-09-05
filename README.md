@@ -71,27 +71,27 @@ A Point holds the position and time. Currently the library doesn't support eleva
 
 + [`tracktotrip.classifer.Classifier`](../master/tracktotrip/classifier.py) provides a wrapper around the [sklearn](http://scikit-learn.org/) classifiers.
 
-+ [`tracktotrip.compression`](../master/tracktotrip/classifier.py) implements path compression algorithm, such as:
++ [`tracktotrip.compression`](../master/tracktotrip/compression.py) implements path compression algorithm, such as:
   - ` drp `: Douglas Ramer Peucker Algorithm
   - ` td_sp `: Top-Down Speed-Based Trajectory Compression Algorithm [1]
   - ` td_tr `: Top-Down Time-Ratio Trajectory Compression Algorithm [1]
   - ` spt `: A combination of both `td_sp` and `td_tr` [1]
 
-+ [`tracktotrip.kalman.kalman_filter`](../master/tracktotrip/classifier.py) executes the kalman filter in a list of point
++ [`tracktotrip.kalman.kalman_filter`](../master/tracktotrip/kalman.py) executes the kalman filter in a list of point
 
-+ [`tracktotrip.learn_trip`](../master/tracktotrip/classifier.py) implements
++ [`tracktotrip.learn_trip`](../master/tracktotrip/learn_trip.py) implements
   - ` trip_learn ` used learn trips
   - ` complete_trip ` used to find trips between two points
 
-+ [`tracktotrip.location.infer_location`](../master/tracktotrip/classifier.py) uses known locations, and web APIs such as Google's and Foursquare's.
++ [`tracktotrip.location.infer_location`](../master/tracktotrip/location.py) uses known locations, and web APIs such as Google's and Foursquare's.
 
-+ [`tracktotrip.similarity`](../master/tracktotrip/classifier.py) implements function to find similarity between two ` Segment `s
++ [`tracktotrip.similarity`](../master/tracktotrip/similarity.py) implements function to find similarity between two ` Segment `s
 
-+ [`tracktotrip.smooth`](../master/tracktotrip/classifier.py) implements functions mitigate kalman's lack of precision in the first predictions
++ [`tracktotrip.smooth`](../master/tracktotrip/smooth.py) implements functions mitigate kalman's lack of precision in the first predictions
 
-+ [`tracktotrip.spatiotemporal_segmentation.spatiotemporal_segmentation`](../master/tracktotrip/classifier.py) uses the DBSCAN algorithm to perform spatiotemporal segmentation
++ [`tracktotrip.spatiotemporal_segmentation.spatiotemporal_segmentation`](../master/tracktotrip/spatiotemporal_segmentation.py) uses the DBSCAN algorithm to perform spatiotemporal segmentation
 
-+ [`tracktotrip.transportation_mode`](../master/tracktotrip/classifier.py) implements transportation learning and prediction functions, such as:
++ [`tracktotrip.transportation_mode`](../master/tracktotrip/transportation_mode.py) implements transportation learning and prediction functions, such as:
   - `extract_features_2` to extract features from a set of points
   - `learn_transportation_mode` to learn the transportation modes of a track
   - `speed_clustering` implements changepoint segmentation and classifies sub-segments between changepoints

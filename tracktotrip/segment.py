@@ -9,7 +9,8 @@ import numpy as np
 
 from .point import Point
 from .utils import pairwise
-from .smooth import with_extrapolation, with_inverse, INVERSE_STRATEGY, EXTRAPOLATE_STRATEGY
+from .smooth import with_no_strategy, with_extrapolation, with_inverse
+from .smooth import NO_STRATEGY, INVERSE_STRATEGY, EXTRAPOLATE_STRATEGY
 from .location import infer_location
 from .similarity import sort_segment_points
 from .compression import spt, drp
@@ -113,6 +114,8 @@ class Segment(object):
             self.points = with_inverse(self.points, noise)
         elif strategy is EXTRAPOLATE_STRATEGY:
             self.points = with_extrapolation(self.points, noise, 30)
+        elif strategy is NO_STRATEGY:
+            self.points = with_no_strategy(self.points, noise)
         return self
 
     def segment(self, eps, min_time):
