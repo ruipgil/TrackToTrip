@@ -19,7 +19,7 @@ def extrapolate_points(points, n_points):
     Returns:
         :obj:`list` of :obj:`Point`
     """
-    points = points[:]
+    points = points[:n_points]
     lat = []
     lon = []
     last = None
@@ -36,8 +36,9 @@ def extrapolate_points(points, n_points):
     gen_sample = []
     last = points[0]
     for _ in range(n_points):
-        point = Point(last.lat+lats, last.lon+lons, last.time - dts)
-        point.compute_metrics(last)
+        point = Point(last.lat+lats, last.lon+lons, None)
+        point.dt = dts
+        # point.compute_metrics(last)
         gen_sample.append(point)
         last = point
 
@@ -53,7 +54,9 @@ def with_extrapolation(points, noise, n_points):
     Returns:
         :obj:`list` of :obj:`Point`
     """
+    n_points = 10
     return kalman_filter(extrapolate_points(points, n_points) + points, noise)[n_points:]
+    # return extrapolate_points(points, 5) + points
 
 def with_no_strategy(points, noise):
     """ Smooths a set of points using just the kalman filter
@@ -66,6 +69,9 @@ def with_no_strategy(points, noise):
         :obj:`list` of :obj:`Point`
     """
     return kalman_filter(points, noise)
+
+def point_mean(point1, point2):
+    return Point((point1.lat + point2.lat)/2.0, (point1.lon + point2.lon)/2.0, point1.time)
 
 def with_inverse(points, noise):
     """ Smooths a set of points
@@ -81,13 +87,16 @@ def with_inverse(points, noise):
     Returns:
         :obj:`list` of :obj:`Point`
     """
-    noise_sample = 20
+    # noise_sample = 20
     n_points = len(points)/2
-    break_point = n_points - noise_sample
+    break_point = n_points
 
-    points_part = copy.deepcopy(points[:n_points])
+    points_part = copy.deepcopy(points)
     points_part = list(reversed(points_part))
     part = kalman_filter(points_part, noise)
     total = kalman_filter(points, noise)
 
-    return list(reversed(part))[:break_point] + total[break_point:]
+    result = list(reversed(part))[:break_point] + total[break_point:]
+    result[break_point] = point_mean(part[break_point], total[break_point])
+
+    return result
