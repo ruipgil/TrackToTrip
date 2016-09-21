@@ -217,7 +217,7 @@ def bounding_box_from(points, i, i1):
 
     return min_lat-latd, min_lon-lond, max_lat+latd, max_lon+lond
 
-def segment_similarity(A, B):
+def segment_similarity(A, B, T=CLOSE_DISTANCE_THRESHOLD):
     """Computes the similarity between two segments
 
     Args:
@@ -249,7 +249,7 @@ def segment_similarity(A, B):
             a = a + 1
             pi = x.object[0].gen2arr()
             pi1 = x.object[1].gen2arr()
-            prox = line_similarity(ti, ti1, pi, pi1)
+            prox = line_similarity(ti, ti1, pi, pi1, T)
             i_prox = i_prox + prox
             n_prox.append(prox)
 

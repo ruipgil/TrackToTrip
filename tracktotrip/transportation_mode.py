@@ -52,7 +52,7 @@ def build_histogram(points):
 def extract_features_2(points):
     hist = build_histogram(points)
     norm = normalize(hist)
-    return cum_prob(norm, list(reversed([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])))
+    return cum_prob(norm, list([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]))
 
 def learn_transportation_mode(track, clf):
     """ Inserts transportation modes of a track into a classifier

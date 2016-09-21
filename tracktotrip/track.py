@@ -73,8 +73,9 @@ class Track(object):
         Returns:
             :obj:`Track`: self
         """
+        print noise
         for segment in self.segments:
-            segment.smooth(strategy, noise)
+            segment.smooth(noise, strategy)
         return self
 
     def segment(self, eps, min_time):
@@ -167,7 +168,7 @@ class Track(object):
         self.remove_noise()
 
         self.compute_metrics()
-        self.smooth(smooth_noise, smooth_strategy)
+        self.smooth(smooth_strategy, smooth_noise)
 
         self.compute_metrics()
         self.segment(seg_eps, seg_min_time)
