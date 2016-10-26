@@ -3,6 +3,7 @@ Track class
 """
 from copy import deepcopy
 from os.path import basename
+from datetime import timedelta
 
 import gpxpy
 import numpy as np
@@ -135,10 +136,13 @@ class Track(object):
 
     def to_trip(
             self,
+            smooth,
             smooth_strategy,
             smooth_noise,
+            seg,
             seg_eps,
             seg_min_time,
+            simplify,
             simplify_max_dist_error,
             simplify_max_speed_error
         ):
@@ -167,14 +171,18 @@ class Track(object):
         self.compute_metrics()
         self.remove_noise()
 
-        self.compute_metrics()
-        self.smooth(smooth_strategy, smooth_noise)
+        print (smooth, seg, simplify)
+        if smooth:
+            self.compute_metrics()
+            self.smooth(smooth_strategy, smooth_noise)
 
-        self.compute_metrics()
-        self.segment(seg_eps, seg_min_time)
+        if seg:
+            self.compute_metrics()
+            self.segment(seg_eps, seg_min_time)
 
-        self.compute_metrics()
-        self.simplify(0, simplify_max_dist_error, simplify_max_speed_error)
+        if simplify:
+            self.compute_metrics()
+            self.simplify(0, simplify_max_dist_error, simplify_max_speed_error)
 
         self.compute_metrics()
 
@@ -377,6 +385,19 @@ class Track(object):
         ]
 
         return u'\n'.join(content)
+
+    def timezone(self, timezone=0):
+        """ Sets the timezone of the entire track
+
+        Args:
+            timezone (int): Timezone hour delta
+
+        """
+        tz_dt = timedelta(hours=timezone)
+        for segment in self.segments:
+            for point in segment.points:
+                point.time = point.time + tz_dt
+        return self
 
     def to_life(self):
         """Converts track to LIFE format

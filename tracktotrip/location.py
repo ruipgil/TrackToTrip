@@ -17,6 +17,23 @@ FOURSQUARE_URL = 'https://api.foursquare.com/v2/venues/search?' \
         'client_id=%s&client_secret=%s&' \
         'll=%f,%f&radius=%f'
 
+GG_CACHE = {}
+FS_CACHE = {}
+
+def from_cache(cache, point, threshold):
+    for entry in cache.keys():
+        if point.distance(entry) < threshold:
+            return cache[entry]
+
+def google_insert_cache(point, values):
+    global GG_CACHE
+    GG_CACHE[point] = values
+
+def foursquare_insert_cache(point, values):
+    global FS_CACHE
+    FS_CACHE[point] = values
+
+
 def compute_centroid(points):
     """ Computes the centroid of set of points
 
@@ -96,6 +113,9 @@ def query_foursquare(point, max_distance, client_id, client_secret):
     if not client_secret:
         return []
 
+    if from_cache(FS_CACHE, point, max_distance):
+        return from_cache(FS_CACHE, point, max_distance)
+
     url = FOURSQUARE_URL % (client_id, client_secret, point.lat, point.lon, max_distance)
     req = requests.get(url)
 
@@ -117,7 +137,9 @@ def query_foursquare(point, max_distance, client_id, client_secret):
             'suggestion_type': 'FOURSQUARE'
         })
 
-    return sorted(result, key=lambda elm: elm['distance'])
+    # final_results = sorted(result, key=lambda elm: elm['distance'])
+    foursquare_insert_cache(point, result)
+    return result
 
 
 def query_google(point, max_distance, key):
@@ -138,6 +160,9 @@ def query_google(point, max_distance, key):
     if not key:
         return []
 
+    if from_cache(GG_CACHE, point, max_distance):
+        return from_cache(GG_CACHE, point, max_distance)
+
     req = requests.get(GOOGLE_PLACES_URL % (
         point.lat,
         point.lon,
@@ -154,10 +179,13 @@ def query_google(point, max_distance, key):
     for local in results:
         final_results.append({
             'label': local['name'],
+            'distance': Point(local['geometry']['location']['lat'], local['geometry']['location']['lng'], None).distance(point),
             # 'rank': (l-i)/float(l),
             'types': local['types'],
             'suggestion_type': 'GOOGLE'
             })
+
+    google_insert_cache(point, final_results)
     return final_results
 
 def infer_location(
@@ -193,12 +221,12 @@ def infer_location(
                 # 'centroid': centroid,
                 'suggestion_type': 'KB'
                 })
-        locations = sorted(locations, key=lambda d: d['distance'])
 
+    api_locations = []
     if len(locations) <= limit:
         if google_key:
             google_locs = query_google(point, max_distance, google_key)
-            locations.extend(google_locs)
+            api_locations.extend(google_locs)
         if foursquare_client_id and foursquare_client_secret:
             foursquare_locs = query_foursquare(
                 point,
@@ -206,11 +234,12 @@ def infer_location(
                 foursquare_client_id,
                 foursquare_client_secret
             )
-            locations.extend(foursquare_locs)
+            api_locations.extend(foursquare_locs)
 
-    locations = locations[:limit]
-
-    if len(locations) > 0:
+    if len(locations) > 0 or len(api_locations) > 0:
+        locations = sorted(locations, key=lambda d: d['distance'])
+        api_locations = sorted(api_locations, key=lambda d: d['distance'])
+        locations = (locations + api_locations)[:limit]
         return Location(locations[0]['label'], point, locations)
     else:
         return Location('#?', point, [])

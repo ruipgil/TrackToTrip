@@ -32,11 +32,14 @@ def correct_segmentation(segments, clusters, min_time):
             segments to correct
         min_time (int): minimum required time for segmentation
     """
-    segments = [points for points in segments if len(points) > 1]
+    # segments = [points for points in segments if len(points) > 1]
 
     result_segments = []
     prev_segment = None
     for i, segment in enumerate(segments):
+        if len(segment) >= 1:
+            continue
+
         cluster = clusters[i]
         if prev_segment is None:
             prev_segment = segment
@@ -55,7 +58,7 @@ def correct_segmentation(segments, clusters, min_time):
 
     return result_segments
 
-def spatiotemporal_segmentation(points, eps, min_time, remove_cluster=True):
+def spatiotemporal_segmentation(points, eps, min_time):
     """ Splits a set of points into multiple sets of points based on
         spatio-temporal stays
 
@@ -82,11 +85,12 @@ def spatiotemporal_segmentation(points, eps, min_time, remove_cluster=True):
             points in different segments
     """
     # min time / sample rate
-    print 'exec'
-    min_samples = min_time / np.average([point.dt for point in points])
+    dt_average = np.median([point.dt for point in points])
+    min_samples = min_time / dt_average
 
     data = [point.gen3arr() for point in points]
     data = StandardScaler().fit_transform(data)
+    print 'min_samples: %f' % min_samples
     db_cluster = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
     labels = db_cluster.labels_
 
@@ -96,6 +100,8 @@ def spatiotemporal_segmentation(points, eps, min_time, remove_cluster=True):
     clusters = [[] for _ in range(n_clusters_+1)]
     current_segment = 0
 
+    print 'clusters'
+    print n_clusters_
     if n_clusters_ == 1:
         segments = temporal_segmentation([points], min_time)
         return [segment for segment in segments if len(segment) > 1]
@@ -110,5 +116,9 @@ def spatiotemporal_segmentation(points, eps, min_time, remove_cluster=True):
         else:
             clusters[label + 1].append(point)
 
-    segments = temporal_segmentation(correct_segmentation(segments, clusters, min_time), min_time)
+    if len(segments) == 0 or sum([len(s) for s in segments]):
+        segments = [points]
+
+    segments = temporal_segmentation(segments, min_time)
+    # segments = temporal_segmentation(correct_segmentation(segments, clusters, min_time), min_time)
     return [segment for segment in segments if len(segment) > 1]

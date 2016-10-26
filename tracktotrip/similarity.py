@@ -278,10 +278,12 @@ def sort_segment_points(Aps, Bps):
         dist = distance_tt_point(Aps[i], Aps[i+1])
         for m in range(j, len(Bps)):
             distm = distance_tt_point(Aps[i], Bps[m])
-            if dist < distm:
-                j = m
-                break
-            mid.append(Bps[m])
+            if dist > distm:
+                direction = dot(normalize(line(Aps[i].gen2arr(), Aps[i+1].gen2arr())), normalize(Bps[m].gen2arr()))
+                if direction > 0:
+                    j = m + 1
+                    mid.append(Bps[m])
+                    break
 
         mid.append(Aps[i+1])
     for m in range(j, len(Bps)):
