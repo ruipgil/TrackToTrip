@@ -64,3 +64,5 @@ scripts/dataset
 scripts/*.data
 scripts/*.labels
 scripts/*.features
+scripts/test/*.pdf
+scripts/test/*.png

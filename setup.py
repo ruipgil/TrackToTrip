@@ -9,7 +9,7 @@ def read(filename):
     """
     return open(os.path.join(os.path.dirname(__file__), filename)).read()
 
-VERSION = '0.4.4'
+VERSION = '0.4.6'
 setup(
     name='tracktotrip',
     packages=['tracktotrip'],
