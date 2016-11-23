@@ -251,9 +251,20 @@ class Track(object):
         Returns:
             :obj:`Segment`: self
         """
+
         for (self_seg_index, track_seg_index, _) in pairings:
             self_s = self.segments[self_seg_index]
+            ss_start = self_s.points[0]
             track_s = track.segments[track_seg_index]
+            tt_start = track_s.points[0]
+            tt_end = track_s.points[-1]
+
+            d_start = ss_start.distance(tt_start)
+            d_end = ss_start.distance(tt_end)
+
+            if d_start > d_end:
+                track_s = track_s.copy()
+                track_s.points = list(reversed(track_s.points))
 
             self_s.merge_and_fit(track_s)
         return self
@@ -272,7 +283,7 @@ class Track(object):
                 return i, idx
         return -1, -1
 
-    def bounds(self):
+    def bounds(self, thr=0):
         """ Gets the bounds of this segment
 
         Returns:
@@ -284,7 +295,7 @@ class Track(object):
         max_lat = -float("inf")
         max_lon = -float("inf")
         for segment in self.segments:
-            milat, milon, malat, malon = segment.getBounds()
+            milat, milon, malat, malon = segment.bounds(thr=thr)
             min_lat = min(milat, min_lat)
             min_lon = min(milon, min_lon)
             max_lat = max(malat, max_lat)

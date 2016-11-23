@@ -12,7 +12,7 @@ from .utils import pairwise
 from .smooth import with_no_strategy, with_extrapolation, with_inverse
 from .smooth import NO_STRATEGY, INVERSE_STRATEGY, EXTRAPOLATE_STRATEGY
 from .location import infer_location
-from .similarity import sort_segment_points
+from .similarity import sort_segment_points, closest_point
 from .compression import spt, drp
 from .transportation_mode import speed_clustering
 from .spatiotemporal_segmentation import spatiotemporal_segmentation
@@ -62,7 +62,7 @@ class Segment(object):
         self.location_from = None
         self.location_to = None
 
-    def bounds(self, lower_index=0, upper_index=-1):
+    def bounds(self, thr=0, lower_index=0, upper_index=-1):
         """ Computes the bounds of the segment, or part of it
 
         Args:
@@ -85,7 +85,7 @@ class Segment(object):
             max_lat = max(max_lat, point.lat)
             max_lon = max(max_lon, point.lon)
 
-        return (min_lat, min_lon, max_lat, max_lon)
+        return (min_lat - thr, min_lon - thr, max_lat + thr, max_lon + thr)
 
     def remove_noise(self):
         """In-place removal of noise points
@@ -232,15 +232,27 @@ class Segment(object):
             thr (float, optional): Distance threshold, in meters, to be considered
                 the same point. Defaults to 20.0
         Returns:
-            int: Index of the point. -1 if doesn't exist
-        """
-        distances = [p.distance(point) for p in self.points]
-        min_index = np.argmin(distances)
+            (int, Point): Index of the point. -1 if doesn't exist. A point is given if it's along the segment
 
-        if distances[min_index] > thr:
-            return -1
-        else:
-            return min_index
+        """
+        i = 0
+        point_arr = point.gen2arr()
+
+        def closest_in_line(pointA, pointB):
+            temp = closest_point(pointA.gen2arr(), pointB.gen2arr(), point_arr)
+            return Point(temp[1], temp[0], None)
+
+        for (p_a, p_b) in pairwise(self.points):
+            candidate = closest_in_line(p_a, p_b)
+            if candidate.distance(point) <= thr:
+                if p_a.distance(point) <= thr:
+                    return i, p_a
+                elif p_b.distance(point) <= thr:
+                    return i + 1, p_b
+                else:
+                    return i, candidate
+            i = i + 1
+        return -1, None
 
     def slice(self, start, end):
         """ Creates a copy of the current segment between indexes. If end > start,

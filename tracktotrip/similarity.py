@@ -27,7 +27,7 @@ def normalize(p):
         float
     """
     l = math.sqrt(p[0]**2 + p[1]**2)
-    return [p[0]/l, p[1]/l]
+    return [0.0, 0.0] if l == 0 else [p[0]/l, p[1]/l]
 
 def angle(p1, p2):
     """Angle between two points
@@ -194,7 +194,7 @@ def line_similarity(p1a, p1b, p2a, p2b, T=CLOSE_DISTANCE_THRESHOLD):
     a = abs(angle_similarity(normalize(line(p1a, p1b)), normalize(line(p2a, p2b))))
     return d * a
 
-def bounding_box_from(points, i, i1):
+def bounding_box_from(points, i, i1, thr):
     """Creates bounding box for a line segment
 
     Args:
@@ -212,10 +212,7 @@ def bounding_box_from(points, i, i1):
     max_lat = max(pi.lat, pi1.lat)
     max_lon = max(pi.lon, pi1.lon)
 
-    latd = (max_lat-min_lat) * 2
-    lond = (max_lon-min_lon) * 2
-
-    return min_lat-latd, min_lon-lond, max_lat+latd, max_lon+lond
+    return min_lat-thr, min_lon-thr, max_lat+thr, max_lon+thr
 
 def segment_similarity(A, B, T=CLOSE_DISTANCE_THRESHOLD):
     """Computes the similarity between two segments
@@ -232,7 +229,7 @@ def segment_similarity(A, B, T=CLOSE_DISTANCE_THRESHOLD):
     idx = index.Index()
     dex = 0
     for i in range(l_a-1):
-        idx.insert(dex, bounding_box_from(A.points, i, i+1), obj=[A.points[i], A.points[i+1]])
+        idx.insert(dex, bounding_box_from(A.points, i, i+1, T), obj=[A.points[i], A.points[i+1]])
         dex = dex + 1
 
     prox_acc = []
@@ -240,7 +237,7 @@ def segment_similarity(A, B, T=CLOSE_DISTANCE_THRESHOLD):
     for i in range(l_b-1):
         ti = B.points[i].gen2arr()
         ti1 = B.points[i+1].gen2arr()
-        bb = bounding_box_from(B.points, i, i+1)
+        bb = bounding_box_from(B.points, i, i+1, T)
         intersects = idx.intersection(bb, objects=True)
         n_prox = []
         i_prox = 0
@@ -254,8 +251,8 @@ def segment_similarity(A, B, T=CLOSE_DISTANCE_THRESHOLD):
             n_prox.append(prox)
 
         if a != 0:
-            # prox_acc.append(i_prox / a)
-            prox_acc.append(max(n_prox))
+            prox_acc.append(i_prox / a)
+            # prox_acc.append(max(n_prox))
         else:
             prox_acc.append(0)
 
