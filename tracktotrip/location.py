@@ -21,7 +21,7 @@ GG_CACHE = {}
 FS_CACHE = {}
 
 def from_cache(cache, point, threshold):
-    for entry in cache.keys():
+    for entry in list(cache.keys()):
         if point.distance(entry) < threshold:
             return cache[entry]
 
@@ -69,7 +69,7 @@ def update_location_centroid(point, cluster, max_distance, min_samples):
 
     clusters = {}
     for i, label in enumerate(p_cluster.labels_):
-        if label in clusters.keys():
+        if label in list(clusters.keys()):
             clusters[label].append(points[i])
         else:
             clusters[label] = [points[i]]
@@ -78,7 +78,7 @@ def update_location_centroid(point, cluster, max_distance, min_samples):
     biggest_centroid_l = -float("inf")
     biggest_centroid = None
 
-    for label, n_cluster in clusters.items():
+    for label, n_cluster in list(clusters.items()):
         centroid = compute_centroid(n_cluster)
         centroids.append(centroid)
 
@@ -216,7 +216,7 @@ def infer_location(
         queried_locations = location_query(point, max_distance)
         for (label, centroid, _) in queried_locations:
             locations.append({
-                'label': unicode(label, 'utf-8'),
+                'label': str(label, 'utf-8'),
                 'distance': centroid.distance(point),
                 # 'centroid': centroid,
                 'suggestion_type': 'KB'

@@ -11,7 +11,7 @@ class TestLearnTrip(unittest.TestCase):
         dt = timedelta(1000)
 
         def pt_arr_to_track(pts):
-            seg = Segment(map(lambda p: Point(None, p[0], p[1], time + dt), pts))
+            seg = Segment([Point(None, p[0], p[1], time + dt) for p in pts])
             return Track(name="TripA", segments=[seg])
 
         self.tripA = pt_arr_to_track(Aps)

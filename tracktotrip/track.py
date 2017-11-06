@@ -5,7 +5,7 @@ from copy import deepcopy
 from os.path import basename
 from datetime import timedelta
 
-import gpxpy
+from . import gpxpy
 import numpy as np
 from rtree import index
 
@@ -74,7 +74,7 @@ class Track(object):
         Returns:
             :obj:`Track`: self
         """
-        print noise
+        print(noise)
         for segment in self.segments:
             segment.smooth(noise, strategy)
         return self
@@ -171,7 +171,7 @@ class Track(object):
         self.compute_metrics()
         self.remove_noise()
 
-        print (smooth, seg, simplify)
+        print((smooth, seg, simplify))
         if smooth:
             self.compute_metrics()
             self.smooth(smooth_strategy, smooth_noise)
@@ -381,21 +381,21 @@ class Track(object):
                     iso_time = point.time.isoformat().split('.')[0]
                     time = '<time>%s</time>' % iso_time
                 gpx_points.append(
-                    u'<trkpt lat="%f" lon="%f">%s</trkpt>' % (point.lat, point.lon, time)
+                    '<trkpt lat="%f" lon="%f">%s</trkpt>' % (point.lat, point.lon, time)
                 )
-            points = u'\n\t\t\t'.join(gpx_points)
-            gpx_segments.append(u'\t\t<trkseg>\n\t\t\t%s\n\t\t</trkseg>' % points)
-        segments = u'\t\n'.join(gpx_segments)
+            points = '\n\t\t\t'.join(gpx_points)
+            gpx_segments.append('\t\t<trkseg>\n\t\t\t%s\n\t\t</trkseg>' % points)
+        segments = '\t\n'.join(gpx_segments)
         content = [
-            u'<?xml version="1.0" encoding="UTF-8"?>',
-            u'<gpx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/0" xsi:schemaLocation="http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd" version="1.0" creator="GatherMySteps">',
-            u'\t<trk>',
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<gpx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/0" xsi:schemaLocation="http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd" version="1.0" creator="GatherMySteps">',
+            '\t<trk>',
             segments,
-            u'\t</trk>',
-            u'</gpx>'
+            '\t</trk>',
+            '</gpx>'
         ]
 
-        return u'\n'.join(content)
+        return '\n'.join(content)
 
     def timezone(self, timezone=0):
         """ Sets the timezone of the entire track

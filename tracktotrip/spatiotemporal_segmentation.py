@@ -90,7 +90,7 @@ def spatiotemporal_segmentation(points, eps, min_time):
 
     data = [point.gen3arr() for point in points]
     data = StandardScaler().fit_transform(data)
-    print 'min_samples: %f' % min_samples
+    print(('min_samples: %f' % min_samples))
     db_cluster = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
     labels = db_cluster.labels_
 
@@ -100,8 +100,8 @@ def spatiotemporal_segmentation(points, eps, min_time):
     clusters = [[] for _ in range(n_clusters_+1)]
     current_segment = 0
 
-    print 'clusters'
-    print n_clusters_
+    print('clusters')
+    print(n_clusters_)
     if n_clusters_ == 1:
         segments = temporal_segmentation([points], min_time)
         return [segment for segment in segments if len(segment) > 1]

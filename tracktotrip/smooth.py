@@ -89,7 +89,7 @@ def with_inverse(points, noise):
     """
     # noise_sample = 20
     n_points = len(points)/2
-    break_point = n_points
+    break_point = int(n_points)
 
     points_part = copy.deepcopy(points)
     points_part = list(reversed(points_part))
