@@ -5,7 +5,7 @@ from copy import deepcopy
 from os.path import basename
 from datetime import timedelta
 
-from . import gpxpy
+import gpxpy
 import numpy as np
 from rtree import index
 

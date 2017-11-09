@@ -57,7 +57,7 @@ def learn_trip(current, current_id, canonical_trips, insert_canonical, update_ca
 
     if len(canonical_trips) == 0:
         current.simplify(eps, 0, 0, topology_only=True)
-        print(("inserting trip %d" % len(current.points)))
+        print("inserting trip %d" % len(current.points))
         insert_canonical(current, current_id)
     else:
         canonical_trips_a = [
@@ -79,14 +79,14 @@ def learn_trip(current, current_id, canonical_trips, insert_canonical, update_ca
 
         trip_id, trip, (similarity, _) = canonical_trips[0]
 
-        print(("similarity = %f" % similarity))
+        print("similarity = %f" % similarity)
 
         if similarity >= 0.7:
             # Same trip, fit all segments
             trip.merge_and_fit(current)#, diffs)
             trip.simplify(eps, 0, 0, topology_only=True)
             update_canonical(trip_id, trip, current_id)
-            print(("updating trip %d" % len(current.points)))
+            print("updating trip %d" % len(current.points))
 
         # elif similarity >= 0.3:
         #     # Fit similar segments
@@ -103,5 +103,5 @@ def learn_trip(current, current_id, canonical_trips, insert_canonical, update_ca
         else:
             # Insert new canonical representation
             current.simplify(eps, 0, 0, topology_only=True)
-            print(("inserting trip %d" % len(current.points)))
+            print("inserting trip %d" % len(current.points))
             insert_canonical(current, current_id)

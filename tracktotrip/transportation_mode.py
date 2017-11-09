@@ -195,7 +195,7 @@ def classify(clf, points, min_time, from_index = None, to_index = None):
     print((len(points), features))
     if len(features) > 0:
         [probs] = clf.predict([features], verbose=True)
-        top_label = sorted(list(probs.items()), key=lambda val: val[1])
+        top_label = sorted(probs.items(), key=lambda val: val[1])
         return {
             'from': from_index,
             'to': to_index,
