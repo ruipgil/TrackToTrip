@@ -5,6 +5,7 @@ from copy import deepcopy
 from os.path import basename
 from datetime import timedelta
 
+import codecs
 import gpxpy
 import numpy as np
 from rtree import index
@@ -512,7 +513,7 @@ class Track(object):
         Return:
             :obj:`list` of :obj:`Track`
         """
-        gpx = gpxpy.parse(open(file_path, 'r'))
+        gpx = gpxpy.parse(codecs.open(file_path, 'r', 'utf-8'))
         file_name = basename(file_path)
 
         tracks = []
