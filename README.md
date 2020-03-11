@@ -36,7 +36,7 @@ The starting points are the [Track](../master/tracktotrip/track.py), [Segment](.
 
 Can be loaded from a GPX file:
 
-````python
+```python
 from tracktotrip import Track, Segment, Point
 
 track = Track.from_gpx(open('file_to_track.gpx', 'r'))
@@ -54,7 +54,7 @@ A track is composed by ` Segment `s, and each segment by ` Point `s.
 
 It can be saved to a GPX file:
 
-````python
+```python
 with open('file.gpx', 'w') as f:
   f.write(track.to_gpx())
 ```
