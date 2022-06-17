@@ -1,7 +1,7 @@
 changepy==0.1
 gpxpy==1.1.1
 ikalman==0.1.12
-numpy==1.11.0
+numpy==1.21.0
 requests==2.10.0
 Rtree
 scikit-learn==0.17.1
